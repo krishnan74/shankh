@@ -1,0 +1,5 @@
+# How you use Arkiv — Shankh
+
+**Do the things you filter on, who can edit each entity, and when it expires fit what your app does?** `shankh.report` is filtered by `ecosystem`/`package`/`version`/`artifactSha256` — exactly how a watcher asks "has anyone already found this exact release malicious?" Only the reporter's wallet can write it; nobody else can forge or alter a report. ~90-day expiry (renewed while relevant) matches how long a given package version stays installed in the wild; `shankh.request` (24h) is a short-lived "has anyone checked this yet?" signal, not a permanent record.
+
+**Does each Arkiv feature you use change something your users see?** The status page reads live `shankh.report` entities to show revocation state (plan-2.md demo step 3/5/6). A second machine's `shankhd` queries by time window (never by package name, for privacy — plan-2.md "Privacy") and re-verifies locally before acting on what it finds — Arkiv is the trigger for an action the user actually sees (their own key going `Inactive`), not a log nobody reads.
