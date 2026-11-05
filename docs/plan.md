@@ -142,9 +142,9 @@ This plan is ready to turn into a repo structure (Phase 2) once you confirm:
 2. The demo path order (steps 1–8) is what you want the judge to see.
 3. You're okay starting the four dependency spikes in parallel before any `shankhd`/contract code is written.
 
-## Scaffold status (2026-11-05)
+## Scaffold status (2026-11-06, updated)
 
-Repo scaffolded on disk — see docs/design.md for what's real per component. **Nothing committed to git yet** (`git log` is empty), per plan-2.md's "no project code before kickoff" rule and the user's explicit instruction not to commit until told, and not before kickoff (22:00 today) regardless. Everything is staged and ready; the following commit split was agreed and is waiting on a go-ahead after kickoff:
+Repo scaffolded, committed, and pushed — public at **https://github.com/krishnan74/shankh**. 7 commits, all after kickoff (2026-11-05 22:00 IST), matching the split below exactly. Confirmed against ETHGlobal's actual rules page (ethglobal.com/rules): *"Any repositories with single commits of large files without proper history will be default assumed to be unqualified"* — the per-component split satisfies this. See docs/design.md for what's real per component (still: nothing deployed, watcher/verifier/kill/ENS-tree/Arkiv-writers are all stubs).
 
 | # | Commit | Files |
 |---|---|---|

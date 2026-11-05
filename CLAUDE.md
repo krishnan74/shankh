@@ -64,10 +64,9 @@ scripts/evidence.sh        # dry run by default; --write to regenerate docs/evid
 
 ## Live
 
-Nothing is deployed yet.
-
 | | |
 |---|---|
+| GitHub repo | https://github.com/krishnan74/shankh (public, 7 commits pushed 2026-11-06) |
 | Deployer / operator | not deployed |
 | `KillSwitch` (Sepolia) | not deployed |
 | ENS `shankh.eth` tree | not registered |
