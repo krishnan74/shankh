@@ -2,7 +2,7 @@
 
 Credentials stolen by a malicious package quarantine and deactivate themselves — triggered by evidence a compromised publisher can't suppress.
 
-**Live:** not deployed yet · **Demo video:** not recorded yet · **Deployed at:** not deployed yet
+**Live:** https://status-page-plum-nine.vercel.app (placeholder content, see Limitations) · **Demo video:** not recorded yet · **Deployed at:** contracts not deployed yet
 
 ## The problem
 
@@ -22,7 +22,8 @@ See [`plan-2.md`](plan-2.md) for the full design (ENS tree, Arkiv entities, demo
 
 | Component | Where | Evidence |
 |---|---|---|
-| — | — | nothing deployed yet — see docs/plan.md's Status table |
+| Status page | https://status-page-plum-nine.vercel.app | placeholder content, not yet wired to live ENS/Arkiv data |
+| Everything else | — | not deployed yet — see docs/plan.md's Status table |
 
 ## Run it
 

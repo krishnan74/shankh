@@ -70,7 +70,7 @@ scripts/evidence.sh        # dry run by default; --write to regenerate docs/evid
 | Deployer / operator | not deployed |
 | `KillSwitch` (Sepolia) | not deployed |
 | ENS `shankh.eth` tree | not registered |
-| Status page | not deployed (Vercel CLI needs `vercel login`, interactive, not done by Claude) |
+| Status page | https://status-page-plum-nine.vercel.app (Vercel project `rdk07042004gmailcoms-projects/status-page`, connected to the GitHub repo for auto-deploy on push to `main`) |
 
 ## Facts learned the hard way
 
@@ -94,4 +94,4 @@ plan-2.md, project-overview.md   Original unedited inputs — provenance only, s
 
 ## Status
 
-Scaffolded, nothing deployed. `shankh` CLI/package, `contracts` (KillSwitch, 3 tests passing locally), `status-page` (builds/lints clean, placeholder content), and `arkiv` (SDK installed, typecheck/test harness passing) all have working empty-project test harnesses. Everything functional (watcher, verifier, kill sequence, ENS tree, Arkiv writers, Vercel deploy) is still a stub or blocked — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's blocking (Vercel login, a funded Sepolia deployer wallet, an AWS sandbox account).
+Scaffolded; status page deployed (placeholder content, see Live table), everything else still a stub. `shankh` CLI/package, `contracts` (KillSwitch, 3 tests passing locally), `status-page` (live, see above), and `arkiv` (SDK installed, typecheck/test harness passing) all have working empty-project test harnesses. Everything functional (watcher, verifier, kill sequence, ENS tree, Arkiv writers) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (a funded Sepolia deployer wallet, an AWS sandbox account).

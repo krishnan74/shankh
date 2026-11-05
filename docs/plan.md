@@ -23,7 +23,7 @@
 | `KillSwitch` contract | built locally, not deployed | `contracts/src/KillSwitch.sol`, 3 Foundry tests passing; needs a funded Sepolia deployer wallet |
 | ENS tree on Sepolia | planned | n/a |
 | Arkiv entities (`shankh.report`, `shankh.request`) and OSV mirror | planned (SDK wired, writers are stubs) | `arkiv/src/` |
-| Status page (live demo link for ENS) | scaffolded, not deployed | `status-page/` builds/lints clean; Vercel deploy blocked on `vercel login` |
+| Status page (live demo link for ENS) | deployed, placeholder content | https://status-page-plum-nine.vercel.app — confirmed publicly reachable, no auth wall |
 | Claude Code hook | planned | n/a |
 | Local package index and harmless LiteLLM replay | planned | n/a |
 | Measurements | planned | see plan-2.md Measurements |
@@ -120,7 +120,7 @@ Plan-2.md's design currently touches both Arkiv prizes (`shankh.report`/`shankh.
 
 ## Open (carried over from plan-2.md, plus new from this ingest)
 
-- **Blocking scaffold completion:** `vercel login` needs an interactive approval in a browser — only the user can do this. Run it, then `scripts/deploy.sh --write` can deploy the status page.
+- ~~`vercel login`~~ — **done 2026-11-06**, status page deployed to https://status-page-plum-nine.vercel.app (placeholder content, confirmed publicly reachable).
 - **Blocking scaffold completion:** a funded Sepolia deployer wallet (`DEPLOYER_PRIVATE_KEY` + `MAINTAINER_ADDRESS` in `.env`) is needed to deploy `KillSwitch` and start on spike 1 (ENSv2 root-role revocation) and spike 5 (sandboxed rebuild proof needs no wallet, but the ENS/contract spikes do).
 - An AWS sandbox account/profile (`AWS_PROFILE=shankh-sandbox`, plus `shankh-audit` per plan-2.md's design) for spike 4 and all of the AWS-kill work.
 - **Actual submission deadline** — "Saturday 22:00" turned out to be kickoff (today, 2026-11-05), not the deadline; the real deadline still needs to come from the event page/schedule.
