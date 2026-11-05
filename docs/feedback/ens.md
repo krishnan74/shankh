@@ -2,4 +2,7 @@
 
 First-hand only. Evidence per item. What worked as well as what didn't.
 
-Nothing yet — the ENSv2 Sepolia spike (docs/plan.md, spike 1) hasn't been run.
+## 1. Emancipation works exactly as documented, on the first try
+**What happened:** Ran `scripts/spikes/ensv2-sepolia-emancipation.sh` against the live Sepolia ENSv2 deployment. Deployed a throwaway `UserRegistry` proxy via `VerifiableFactory.deployProxy`, granted the deployer the four "dangerous" roles (`ROLE_SET_PARENT`, `ROLE_UNREGISTER`, `ROLE_SET_SUBREGISTRY`, `ROLE_SET_RESOLVER`) plus their admins, confirmed `isEmancipated()` read `false`, called `revokeRootRoles`, confirmed `isEmancipated()` flipped to `true`, then confirmed re-granting any role afterward reverts with `EACCannotGrantRoles` — no admin role survives to undo it. Matches the docs' description exactly, no surprises.
+**Evidence:** Proxy `0x6a436e5eee7a5aca30db87267e0e0488a8e2f2fd`, deploy tx `0xc8fcd6c5d270506ba5b1e6d0597ed984b6bafa05ed0df5ac6514468045167fd4`, revoke tx `0xc8a950c20b590cd61ffe29495e2209daedea208c05e048f94b5abae51a4e155e` (block 12072481, Sepolia).
+**Suggestion:** The Permissioned Registry and Enhanced Access Control docs pages never show a full runnable ABI (no `parseAbi()` block, no linked ABI JSON, no npm package) — every function signature has to be pieced together from prose across three separate pages, and the `Grant` struct's field order isn't documented at all. Had to pull the verified ABI from Sourcify directly to confirm `Grant{address account, uint256 roleBitmap}` field order before this would run safely. A single runnable code example per page (even just a `parseAbi` array) would save real time.
