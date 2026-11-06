@@ -5,8 +5,9 @@
  * machine running the same version can read it back instead of re-running its own rebuild.
  */
 import { ExpirationTime } from "@arkiv-network/sdk";
-import { addr, bool, str } from "@arkiv-network/sdk/schema";
+import { addr, bool, bytes, str } from "@arkiv-network/sdk/schema";
 import { and, eq } from "@arkiv-network/sdk/query";
+import { hexToString, stringToHex } from "viem";
 
 import { arkivPublicClient, arkivWalletClient } from "./client.ts";
 import { ShankhReport } from "./schema.ts";
@@ -34,7 +35,7 @@ export async function writeReport(report: VerificationReport) {
       tier: str(report.tier),
       malicious: bool(report.malicious),
       reporter: addr(client.account.address),
-      findings: str(JSON.stringify(report.findings)),
+      findings: bytes(stringToHex(JSON.stringify(report.findings))),
     },
     { expiration: ExpirationTime.fromDays(REPORT_LIFETIME_DAYS) },
   );
@@ -48,5 +49,7 @@ export async function findExistingReport(pkg: string, version: string) {
     .from(ShankhReport)
     .where(and(eq("package", pkg), eq("version", version)))
     .fetch();
-  return page.entities[0] ?? null;
+  const entity = page.entities[0];
+  if (!entity) return null;
+  return { ...entity, findings: JSON.parse(hexToString(entity.findings.value)) as VerificationFinding[] };
 }

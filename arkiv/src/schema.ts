@@ -2,7 +2,7 @@
  * Arkiv entity schemas for Shankh's submitted Build on Arkiv prize (shankh.report, shankh.request).
  * See /arkiv/schema.md for the human-readable version judges are pointed at.
  */
-import { addr, bool, defineSchema, str } from "@arkiv-network/sdk/schema";
+import { addr, bool, bytes, defineSchema, str } from "@arkiv-network/sdk/schema";
 
 /**
  * One package's verification result, signed by whoever ran it. This is the alarm the thesis
@@ -16,7 +16,9 @@ export const ShankhReport = defineSchema("shankh.report", {
   malicious: bool().indexed(),
   reporter: addr().indexed(),
   // JSON-encoded array of { relativePath, tier } -- the specific files that triggered the finding.
-  findings: str(),
+  // A `str` column caps out at 128 UTF-8 bytes (the SDK's MAX_STRING_BYTES); a real finding list
+  // routinely exceeds that, so this has to be `bytes` -- not queryable itself, but `tier` already is.
+  findings: bytes(),
 });
 
 /**
