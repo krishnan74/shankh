@@ -12,7 +12,13 @@ from shankh import scan as scan_mod
 from shankh import trust as trust_mod
 from shankh import verify as verify_mod
 from shankh.inventory import build_fingerprint, installed_package
-from shankh.report import ReportReadError, ReportWriteError, read_reports, write_report
+from shankh.report import (
+    ReportReadError,
+    ReportWriteError,
+    extend_report,
+    read_reports,
+    write_report,
+)
 from shankh.verify import RiskTier, VerifyResult
 
 app = typer.Typer(name="shankh", help="Verify packages against their public source; kill reachable credentials on proof of compromise.")
@@ -135,12 +141,18 @@ def scan(
         typer.echo(f"               {alarm.detail}")
         typer.echo(f"               alarm entity {alarm.report_key}")
         if alarm.outcome == "confirmed" and report and alarm.recheck is not None:
-            # This machine's own, independent confirmation -- a second witness for everyone else.
+            # This machine's own, independent confirmation -- a second witness for everyone else --
+            # and it keeps the original alarm alive (alarms are extendable by anyone, editable by no one).
             try:
                 written = write_report(alarm.recheck)
                 typer.echo(f"               confirmation reported to Arkiv: {written['entityKey']} (tx {written['txHash']})")
             except ReportWriteError as exc:
                 typer.echo(f"               could not write to Arkiv (continuing): {exc}")
+            try:
+                extended = extend_report(alarm.report_key)
+                typer.echo(f"               kept the original alarm alive for another 90 days (tx {extended['txHash']})")
+            except ReportWriteError as exc:
+                typer.echo(f"               could not extend the original alarm (continuing): {exc}")
     if result.compromised:
         raise typer.Exit(code=2)
 

@@ -8,11 +8,14 @@
 #   scripts/demo-arkiv.sh run       1. machine B scans (no alarm about this build exists yet)
 #                                   2. machine A rebuilds it from source, catches it, posts to Arkiv
 #                                   3. machine B scans again, trusting shankh-team.reporters.shankh.eth:
-#                                      reads the alarm, re-checks locally, COMPROMISED
+#                                      reads the alarm, re-checks locally, COMPROMISED -- then, with its
+#                                      own wallet, posts its confirmation and keeps A's alarm alive
 #
-# Both "machines" are on this laptop and machine A's alarm is signed by the demo operator wallet,
-# which is also what shankh-team.reporters.shankh.eth's shankh.signer points at. Machine B runs
-# with --no-report: a confirmation from the same wallet would not be an independent witness.
+# Both "machines" are on this laptop. Machine A signs with the demo operator wallet (what
+# shankh-team.reporters.shankh.eth's shankh.signer points at). Machine B signs with its own wallet,
+# MACHINE_B_ARKIV_PRIVATE_KEY in .env, so its confirmation is a second, independent witness and its
+# extension of A's alarm shows "extendable by anyone" for real. Without that key, machine B runs
+# with --no-report, since a confirmation from A's own wallet would not be independent.
 #
 # Safety, as in demo-ens.sh: neither victim environment's Python is ever started (site-packages
 # found by glob; the poisoned wheel is installed into a fresh venv before any poison exists there),
@@ -79,7 +82,12 @@ run() {
     "$SHANKH" verify shankh-demo==1.0.0 --site-packages "$sp_a" --find-links "$DEMO_DIR/dist/clean" || true
 
   step "3/3  Machine B scans again: the alarm arrives, is re-checked here, and holds up"
-  readonly_env "$SHANKH" scan --site-packages "$sp_b" --trust "$REPORTER" --find-links "$DEMO_DIR/dist/clean" --no-report || true
+  if [ -n "${MACHINE_B_ARKIV_PRIVATE_KEY:-}" ]; then
+    readonly_env ARKIV_WALLET_PRIVATE_KEY="$MACHINE_B_ARKIV_PRIVATE_KEY" \
+      "$SHANKH" scan --site-packages "$sp_b" --trust "$REPORTER" --find-links "$DEMO_DIR/dist/clean" || true
+  else
+    readonly_env "$SHANKH" scan --site-packages "$sp_b" --trust "$REPORTER" --find-links "$DEMO_DIR/dist/clean" --no-report || true
+  fi
 }
 
 case "${1:-}" in

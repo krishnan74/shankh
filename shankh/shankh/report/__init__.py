@@ -77,3 +77,24 @@ def read_reports(creators: list[str], limit: int = 50) -> list[dict]:
     if proc.returncode != 0:
         raise ReportReadError(proc.stderr.strip() or "arkiv read-reports failed")
     return json.loads(proc.stdout.strip() or "[]")
+
+
+def extend_report(entity_key: str, days: int = 90) -> dict:
+    """Keep a confirmed alarm alive (arkiv/src/extend-report-cli.ts): push its expiry out `days` from
+    now, signed by this machine's wallet. Allowed on any alarm created with `permissionlessExtension`,
+    whoever wrote it, and it can't change what the alarm says. Returns {entityKey, txHash, expiresAt}."""
+    try:
+        proc = subprocess.run(
+            ["npm", "run", "--silent", "extend-report"],
+            cwd=ARKIV_DIR,
+            input=json.dumps({"entityKey": entity_key, "days": days}),
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=READ_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ReportWriteError(f"Arkiv didn't answer within {READ_TIMEOUT_SECONDS}s") from exc
+    if proc.returncode != 0:
+        raise ReportWriteError(proc.stderr.strip() or "arkiv extend-report failed")
+    return json.loads(proc.stdout.strip())

@@ -35,14 +35,14 @@ So: one person's rebuild catches the problem, it propagates via ENS/Arkiv, and e
 
 ## 4. What's actually real right now — be precise, judges will ask
 
-- Rebuild verifier: real, tested against a real clean package and a real planted malicious package.
-- ENS tree: real, live on Sepolia testnet — `shankh.eth → pypi.shankh.eth` (emancipated, confirmed by trying to undo it and watching it fail) `→ shankh-demo.pypi.shankh.eth`. A real `KillSwitch` has performed a real on-chain revocation.
-- Arkiv evidence writer: real, entities written and read back from the Arkiv testnet, including the ENS revocation signal now folded into every report.
-- Status page: deployed, reads live on-chain/Arkiv data every request, including the live ENS tree's `shankh.source`/`shankh.revoked` records — no hard-coded demo values.
-- `shankh verify` now checks the ENS revocation signal (kill signal #2) as well as the rebuild diff — a maintainer's on-chain revoke overrides a clean rebuild result.
-- Not yet built: the always-running watcher daemon (today the verify step runs on command, not automatically), and the AWS quarantine-and-deactivate sequence itself (blocked on provisioning a sandbox AWS account).
+- **The watcher (`shankhd`):** real. It notices a new install within seconds and rebuilds it from its public source, with nobody typing a command (caught live 2–4 seconds after install).
+- **Rebuild verifier:** real, tested against a real clean package and a real planted malicious package.
+- **ENS:** real, live on Sepolia — `shankh.eth → pypi.shankh.eth` (emancipated, confirmed by trying to undo it and watching it fail) → three packages, each with its own `KillSwitch`. A maintainer's flag was caught by `shankh scan` from ENS alone. Reporters have ENS names too (`shankh-team.reporters.shankh.eth`).
+- **Arkiv:** real both ways. Alarms are written signed, read-only (an edit by the alarm's own owner was refused by the chain) and extendable by anyone. Other machines read trusted reporters' alarms, re-check them locally, and keep confirmed ones alive — shown live with two machines on separate wallets.
+- **Landing page and `/registry`:** deployed, every value read live per request — no hard-coded demo values.
+- **Not yet built:** switching the stolen AWS key off (blocked on an AWS sandbox account — the watcher already calls the hook it will plug into), the public-advisory (OSV) signal, Docker images, and running the watcher as a system service.
 
-Say this plainly if asked — don't overclaim the watcher or AWS kill as working.
+Say this plainly if asked — every catch today ends in an alarm, not yet a switched-off key.
 
 ## 5. Why each partner track, and what each judge will probe
 

@@ -6,8 +6,8 @@ Shankh was built with Claude Code (Anthropic's coding agent) working in this rep
 
 Most of the code and most of the docs:
 
-- **The CLI (`shankh/`):** the `shankhd` watcher, the rebuild verifier, the build fingerprint, the ENS reader, the registry sweep, the trusted-reporter loop, the Arkiv bridge, and all 39 tests.
-- **Contracts and chain scripts:** `contracts/src/KillSwitch.sol` and its 3 Foundry tests, and every script under `scripts/` (ENS tree registration, adding packages and reporters, the demo scripts, the inert poisoned test package).
+- **The CLI (`shankh/`):** the `shankhd` watcher, the rebuild verifier, the build fingerprint, the ENS reader, the registry sweep, the trusted-reporter loop, the Arkiv bridge, and all 41 tests.
+- **Contracts and chain scripts:** `contracts/src/KillSwitch.sol` and its 6 Foundry tests, and every script under `scripts/` (ENS tree registration, adding packages and reporters, the demo scripts, the inert poisoned test package).
 - **Arkiv package (`arkiv/`):** schema, writer, readers, and the `arkiv/*.md` judging docs.
 - **Landing page (`status-page/`):** all components and live reads, built to design documents the team provided (below).
 - **Docs:** `docs/plan.md` (ingested from the team's own plan), design, decisions, build log, feedback, evidence, technical deep dive, both pitch scripts, the demo video script, the submission form draft, and the README.

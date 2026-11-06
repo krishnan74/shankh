@@ -21,9 +21,11 @@ Shankh has four jobs. Think of them as a pipeline on every developer machine, pl
                ┌──────────── Arkiv (shared evidence) ────────────┐   ┌──── ENS (maintainer's switch) ────┐
                │ shankh.report: "foo 1.2.3 is CRITICAL,           │   │ foo.pypi.shankh.eth               │
                │  here are the rogue files" — signed by the       │   │   shankh.source  = repo URL        │
-               │  machine that found it                           │   │   shankh.revoked = bad hashes      │
+               │  machine that found it, read-only for good       │   │   shankh.revoked = bad builds      │
                └──────────────────────────────────────────────────┘   └───────────────────────────────────┘
 ```
+
+**Built today:** NOTICE (the `shankhd` watcher, for new installs), VERIFY, DECIDE for three of the four signals, and both shared places. **Not built:** ACT — the key shut-off — which is why the box above is the final design, not today's behaviour.
 
 The key insight that makes this different from a scanner: **the alarm lives in two places the attacker can't reach.** If someone steals a maintainer's GitHub or PyPI login, they can publish malicious code. They can't write to Arkiv under *your* machine's key, and they can't write `shankh.revoked` on ENS, because that's controlled by the maintainer's wallet through a contract — a credential the stolen login never touched.
 
@@ -96,7 +98,8 @@ Arkiv is a shared, public data layer with its own blockchain (testnet chain "rab
 | `artifactSha256` | the build fingerprint (column name kept for older entities) | yes |
 | `ensRevoked` | did the maintainer's ENS revoke force the verdict? | yes |
 
-4. It expires after 90 days unless renewed. ENS is the permanent record; Arkiv is the recent, detailed evidence.
+4. It's created with two flags fixed for its whole life: **`readonly`** — nobody can ever edit it, not even the machine that wrote it, so a stolen reporter key can't flip an alarm to "clean" (the owner can still delete it; read-only isn't undeletable) — and **`permissionlessExtension`** — any machine can extend its lifetime, but not change it.
+5. It lives 90 days, and every machine that confirms it pushes that out again. ENS is the maintainer's permanent record; Arkiv is the shared, detailed evidence.
 
 **Proven:** real entities on the testnet, written and read back (see `docs/evidence.md`).
 
@@ -105,12 +108,20 @@ Arkiv is a shared, public data layer with its own blockchain (testnet chain "rab
 - A text (`str`) field caps at 128 bytes, which is why `findings` is stored as bytes.
 - Selecting a field that older entities don't have makes Arkiv silently return *none* of those older entities. That hid all reports from the status page for a while; the fix queries the basic fields first and merges the newer ones in. Both are recorded in `docs/feedback/arkiv.md`.
 
-### Final design
+### Reading and acting on other machines' alarms (built)
 
-- Machines **sync reports by time window** ("everything from the last hour"), never by searching for a specific package. Searching by package name would reveal what you have installed. This is a privacy choice.
-- A report from someone else **never kills anything by itself.** Your machine only acts on reports from reporters *you* chose to trust, and even then it re-runs the verification locally first. A false or malicious report costs a re-check, not your credentials.
-- **Trust is explicit:** you list trusted reporters by ENS name in `~/.config/shankh/trust.toml`, e.g. `alice.reporters.shankh.eth`. That name has a `shankh.signer` record holding the address reports must be signed by.
-- `shankh.request` (schema exists, writer not built): a 24-hour "has anyone checked foo 1.2.3?" record.
+Code: `shankh/shankh/scan/`, `shankh/shankh/trust/`, `shankh/shankh/daemon.py`, `arkiv/src/report.ts` (`recentReportsBy`, `extendReport`).
+
+- **Trust is explicit.** You list trusted reporters by ENS name in `~/.config/shankh/trust.toml` or with `--trust`, e.g. `shankh-team.reporters.shankh.eth`. That name's `shankh.signer` record — writable only by the reporter — holds the wallet their alarms must be signed by.
+- **Read by reporter, never by package.** A machine asks Arkiv for each trusted reporter's most recent alarms (`.createdBy(wallet)`, newest first) and matches them against what's installed *locally*. Searching by package name would tell whoever answers what you have installed. It filters on the signer Arkiv itself records (`$creator`), never on the self-declared `reporter` field, which anyone can fill in.
+- **A report never acts by itself.** An alarm counts only if it names the exact build installed here (by fingerprint) — and then your machine rebuilds the package itself. Only a local CRITICAL counts. A fake alarm about a clean package costs a re-check, not your credentials.
+- **Confirming keeps the alarm alive.** A machine that confirms someone else's alarm posts its own confirmation (a second, independent witness) and extends the original alarm's lifetime.
+- `shankh scan --trust` does this once; `shankhd` does it every 60 seconds. Proven live with two machines on separate wallets (`scripts/demo-arkiv.sh`, docs/evidence.md).
+
+### Still planned
+
+- `shankh.request` (schema exists, writer not built): a 24-hour "has anyone checked foo 1.2.3?" record — the litepaper's message-queue pattern.
+- Push instead of polling: Arkiv's `watchEntityEvents` would let `shankhd` react the moment a trusted reporter posts, instead of within 60 seconds.
 - `osv.mal` (stub): a mirror of the public OSV malicious-packages list, so advisories are readable from the same place.
 
 ---
@@ -163,7 +174,7 @@ Then we removed our own broad "write any record" permission. This is a one-way d
 - `revoke(hash)` — maintainer only, instant. Adds the hash to a list and writes the whole list into `shankh.revoked` as comma-separated hex.
 - `queueUnrevoke(hash)` → wait **48 hours** → `unrevoke(hash)`. **Kill fast, restore slow:** if a maintainer's wallet is ever stolen, the thief can't quickly un-flag a bad release.
 
-On Sepolia it has performed one real revoke. Six Foundry tests pass. **It has not been reviewed line by line**, so never call it audited.
+On Sepolia it has flagged real builds. Six Foundry tests pass. The team reviewed it line by line (2026-11-06); it has **not** been externally audited, so never call it audited.
 
 ### How a machine reads it
 
@@ -189,10 +200,12 @@ The finished design allows an **automatic kill** on any one of these:
 
 | # | Signal | Status |
 |---|---|---|
-| 1 | Your own rebuild finds a critical or high mismatch | built (critical tier) |
-| 2 | The maintainer revoked this exact artifact hash on ENS | built, wired into `verify` |
+| 1 | Your own rebuild finds a critical or high mismatch | built (critical tier) — `verify`, and `shankhd` on every new install |
+| 2 | The maintainer revoked this exact build on ENS | built — `verify`, `shankh scan`, `shankhd` (every package swept) |
 | 3 | An OSV/GHSA *malware* advisory exists for this version | not built (`osv.mal` mirror is a stub) |
-| 4 | A trusted reporter's Arkiv report, **re-verified locally** | not built (reports are written; reading and acting on others' isn't) |
+| 4 | A trusted reporter's Arkiv report, **re-verified locally** | built — `shankh scan --trust`, `shankhd` |
+
+Today a signal raises the alarm and calls `shankh.kill.respond()`, which says plainly that the key shut-off isn't built yet (Part 6).
 
 Some things only cause **suspicion** — a re-check, never a kill:
 - the registry pulling a version (sometimes harmless, e.g. a whole project quarantined by mistake);
@@ -204,7 +217,7 @@ Some things only cause **suspicion** — a re-check, never a kill:
 
 ## Part 6 — Act: the kill sequence (not built — final design)
 
-This is the part that actually saves someone, and it's the biggest gap today. It's blocked on getting a disposable AWS sandbox account. Planned in `plan-2.md`:
+This is the part that actually saves someone, and it's the biggest gap today. It's blocked on getting a disposable AWS sandbox account. The hook it plugs into already exists: the watcher calls `shankh.kill.respond()` on every confirmed compromise, so wiring the AWS steps in changes nothing else. Planned in `plan-2.md`:
 
 **AWS, in this order:**
 1. Attach AWS's own `AWSCompromisedKeyQuarantineV3` policy to the user that owns the key. This blocks dangerous actions immediately, even before step 2 finishes.
@@ -220,11 +233,18 @@ The secret key is read from `~/.aws` or `docker inspect` only at kill time, and 
 
 ---
 
-## Part 7 — Notice: the watcher (not built — final design)
+## Part 7 — Notice: the watcher (built for installs; full inventory is the final design)
 
-`shankhd`, a background service. Today `shankh/shankh/daemon.py` is a stub, so `verify` only runs when you run it.
+`shankhd` (`shankh/shankh/daemon.py`) runs in the background on one environment:
+- **Every 2 seconds** it lists the environment's installed packages — a directory listing, no network. Each new install is rebuilt from its public source the moment it lands (`verify`).
+- **Every 60 seconds** it sweeps every package's bad-builds list on ENS and the trusted reporters' recent alarms on Arkiv.
+- It **remembers** what it has handled, so the same build isn't rebuilt or alerted on twice, and the same alarm isn't re-checked every minute.
+- On a compromise it posts its own finding to Arkiv once (or extends the alarm it confirmed) and calls `shankh.kill.respond()`.
+- It only ever *reads* the environment's files — it never starts that environment's Python, so a poisoned package's startup hook never runs.
 
-**What it inventories:**
+Proven live (`scripts/demo-watch.sh`): a poisoned test package installed while it ran was caught 2–4 seconds later with nobody typing a command. Not yet: running as a system service, memory across restarts, Docker images, and the credential inventory below.
+
+**What the final design also inventories:**
 - Python interpreters and virtual environments (PATH, `~/.venvs`, project `.venv`, pyenv, conda), and every package's files and hashes.
 - Docker images and running containers, via the Docker API.
 - An **exposure snapshot — identifiers only, never secret values:**
@@ -235,7 +255,7 @@ The secret key is read from `~/.aws` or `docker inspect` only at kill time, and 
   - LLM API key names;
   - which credential files containers have mounted.
 
-All of it is stored locally in SQLite and never leaves the machine. When something new is installed, the watcher runs `verify` and checks the signals.
+All of it is stored locally in SQLite and never leaves the machine.
 
 **Its own safety:** `shankhd` needs powerful access (the Docker socket, credential files), so it would itself be a target. The plan is a dedicated system user, minimal hash-pinned dependencies, signed reproducible releases, and verifying its own integrity on start.
 
@@ -259,7 +279,7 @@ All of it is stored locally in SQLite and never leaves the machine. When somethi
 7. **Machine C** reads ENS, sees its installed artifact is revoked, and kills **without needing any rebuild.** The attacker still has the maintainer's PyPI login but can't touch any of this.
 8. **Servers off:** even with Shankh's website and any backend shut down, every machine still verifies and kills on its own. Nothing depends on Shankh's servers. That's the Ethereum Foundation "CROPS" argument.
 
-**Today, steps 2 (verify, run by hand), 4 (report) and 6 (revoke) are real. Steps 3, 5, 7 and the watcher in step 2 are not built yet.**
+**Today, steps 2 (the watcher notices and rebuilds), 4 (the signed report), 5 (machine B picks up the alarm and re-checks it), 6 (the maintainer's revoke) and 7 (machine C catches it from ENS alone) all run live — every catch ends in an alarm, not yet a kill. The kill itself (step 3, and the kill at the end of 5 and 7) is not built.**
 
 ---
 
@@ -272,7 +292,9 @@ A Next.js page that, **on every single request**, reads:
 - `isEmancipated()` on `pypi.shankh.eth`;
 - the resolver's `shankh.source` and `shankh.revoked`;
 - `KillSwitch.maintainer()`;
-- all `shankh.report` entities from Arkiv.
+- recent `shankh.report` entities from Arkiv, newest first, each labelled by its real signer's ENS reporter name;
+- the trusted reporters under `reporters.shankh.eth` and their `shankh.signer` wallets;
+- every package under `pypi.shankh.eth` with its bad-builds list — on its own page, `/registry`, alongside the Arkiv alarms about each package and the full on-chain ledger.
 
 It also **re-simulates both attack attempts** against live Sepolia, without sending a transaction, and shows the chain's real refusal. Nothing is cached or typed in by hand. If a read fails, the page says so instead of showing a fake value.
 
@@ -289,7 +311,9 @@ It also **re-simulates both attack attempts** against live Sepolia, without send
 | Per-key resolver permissions | The maintainer and `KillSwitch` each control only their own record. |
 | Arkiv for reports | Signed, shared and independently checkable. One machine's catch helps everyone. |
 | Re-verify before acting on someone else's report | A false report costs a re-check, not your keys. |
-| Sync by time window | Searching by package name would leak what you have installed. |
+| Read alarms by reporter, never by package | Searching by package name would leak what you have installed. |
+| Alarms read-only, extendable by anyone | A stolen reporter key can't rewrite an alarm; every machine that confirms it keeps it alive. |
+| Trust the signer Arkiv records, not a field in the report | Anyone can type any address into a field; only the signer can't be faked. |
 | Deactivate, never delete | Mistakes stay reversible. |
 | Instant revoke, 48-hour unrevoke | Kill fast, restore slow. A stolen maintainer wallet can't quickly un-flag a bad release. |
 
@@ -300,13 +324,13 @@ It also **re-simulates both attack attempts** against live Sepolia, without send
 | Component | Today |
 |---|---|
 | Rebuild/diff verifier (`shankh verify`) | built, proven on real packages |
-| ENS revocation check inside `verify` | built, one package |
-| Arkiv report writer | built, real entities on testnet |
-| ENS tree + emancipation + per-key permissions | built, live on Sepolia |
-| `KillSwitch` contract | deployed, one real revoke, not reviewed line by line |
-| Live status page | built and deployed |
-| Watcher daemon (`shankhd`) | not built |
-| Reading and acting on others' Arkiv reports | not built |
+| ENS revocation check and registry sweep (`shankh scan`) | built, every package under `pypi.shankh.eth` |
+| Arkiv report writer | built; alarms read-only and extendable by anyone |
+| Reading and acting on trusted reporters' Arkiv alarms | built, proven with two machines on separate wallets |
+| Watcher (`shankhd`) for new installs | built, proven live; not a system service yet |
+| ENS tree + emancipation + per-key permissions | built, live on Sepolia (packages and reporters) |
+| `KillSwitch` contract | deployed per package; reviewed line by line by the team, not externally audited |
+| Live landing page and `/registry` | built and deployed |
 | OSV/GHSA advisory signal | not built |
 | AWS quarantine/deactivate/audit | not built — blocked on a sandbox AWS account |
 | Sandboxed compiled rebuild | not built (today's diff covers pure-Python) |
@@ -324,7 +348,7 @@ If you can answer these without looking, you understand the system well enough t
 4. Why can't a stolen GitHub or PyPI login write `shankh.revoked`?
 5. What happens if someone posts a false report to Arkiv saying a clean package is malicious?
 6. Why is un-revoking delayed 48 hours but revoking instant?
-7. Why does a machine sync reports by time window instead of searching for its own packages?
+7. Why does a machine read alarms by reporter instead of searching for its own packages?
 8. Which of the four kill signals work today, and which don't?
 9. What's the first AWS action in the kill sequence, and why does it come before deactivating the key?
 
@@ -338,7 +362,7 @@ If you can answer these without looking, you understand the system well enough t
 5. A machine only acts on trusted reporters, and even then re-runs the rebuild locally. A clean package re-checks as clean, so nothing is killed.
 6. If a maintainer's wallet is stolen, the thief can't quickly un-flag a malicious release. Flagging, by contrast, should be as fast as possible.
 7. Searching by package name would tell anyone watching what you have installed.
-8. Rebuild mismatch and ENS revocation work today. The advisory and trusted-report signals don't.
+8. Rebuild mismatch, ENS revocation and trusted Arkiv reports work today. The advisory signal doesn't — and none of them can switch a key off yet.
 9. Attaching the quarantine policy. It blocks dangerous actions immediately, closing the window while the deactivation goes through.
 
 </details>

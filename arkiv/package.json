@@ -8,7 +8,9 @@
     "write-report": "tsx src/write-report-cli.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test src/*.test.ts",
-    "read-reports": "tsx src/read-reports-cli.ts"
+    "read-reports": "tsx src/read-reports-cli.ts",
+    "extend-report": "tsx src/extend-report-cli.ts",
+    "check-alarm": "tsx src/check-alarm-cli.ts"
   },
   "keywords": [],
   "author": "",

@@ -40,9 +40,9 @@ Not built yet: automatically quarantining and deactivating the stolen keys, and 
 
 ## How it's built
 
-- **CLI (`shankh/`, Python + Typer):** reads installed files and hashes from pip's `RECORD`, fetches the source archive from PyPI's JSON API, and diffs them. ENS reads shell out to Foundry's `cast` through the ENSIP-10 `resolve()` path. Arkiv reads and writes go through a small TypeScript bridge to `@arkiv-network/sdk`. 34 tests.
+- **CLI (`shankh/`, Python + Typer):** reads installed files and hashes from pip's `RECORD`, fetches the source archive from PyPI's JSON API, and diffs them. ENS reads shell out to Foundry's `cast` through the ENSIP-10 `resolve()` path. Arkiv reads and writes go through a small TypeScript bridge to `@arkiv-network/sdk`. `shankhd`, the watcher, lists the environment every 2 seconds and sweeps ENS and Arkiv every minute, never starting the watched environment's Python. 41 tests.
 - **ENSv2 on Sepolia (`scripts/ens/`):** `shankh.eth` registered via commit-reveal; `pypi.shankh.eth` and `reporters.shankh.eth` are `PermissionedRegistry` proxies with their dangerous root roles revoked (emancipated). Each package has its own `PermissionedResolver` where the maintainer can only write `shankh.source` and only its `KillSwitch` can write `shankh.revoked` (key-scoped setter roles).
-- **`KillSwitch.sol` (Foundry):** instant `revoke(build)`, 48-hour timelocked un-revoke, syncs the resolver's text record on every change.
+- **`KillSwitch.sol` (Foundry):** instant `revoke(build)`, 48-hour timelocked un-revoke, syncs the resolver's text record on every change. 6 Foundry tests; reviewed line by line by the team, not externally audited.
 - **Arkiv (`arkiv/`):** `shankh.report` entities with indexed package, version, tier, build fingerprint and ENS flag; reads filter by the chain-recorded creator, never by package.
 - **Landing page (`status-page/`, Next.js on Vercel):** server-rendered on every request, every live read capped at 4 seconds so one slow network can't hang the page.
 
@@ -83,9 +83,10 @@ Arkiv carries the alarms machines send each other, and Shankh both writes and ac
 
 - **Write:** every `shankh verify` writes a `shankh.report` (package, version, tier, findings, build fingerprint, ENS flag), signed by the finder's wallet. Example: entity `0xe7d2102e72c192949b5dcd99ccba16743796b6cf36413aa46a60d9c558687ec0`.
 - **Read and act:** `shankh scan --trust shankh-team.reporters.shankh.eth` reads that reporter's recent reports with `.createdBy(wallet)`, the chain-recorded signer rather than a self-declared field, keeps those naming a build installed here, and re-checks them locally before flagging. Proven live with two machines (`scripts/demo-arkiv.sh`).
-- **Why Arkiv, not a database:** the alarm has to survive the attacker and us. A report owned by the finder's wallet can't be edited or deleted by the publisher, by Shankh, or by anyone who takes over our infrastructure.
+- **Alarms nobody can edit, kept alive by everyone who confirms them:** every alarm is created `readonly` and `permissionlessExtension`. An edit attempt by the alarm's own owner was refused live by the chain, so a stolen reporter key can't quietly flip an alarm to "clean"; and machine B, with its own wallet, extended machine A's alarm after confirming it (alarm `0x6a1c8ffc718936d2b8240c30c957eaa85f10057b4699afae5fcbcdb1121376f7`, extension tx `0x98f60cf0347e430c1ecfe94e678ce0829879bf15d5150d7bbeeead771c9ab349`). Read-only isn't undeletable: the owner can still delete it.
+- **Why Arkiv, not a database:** it's the litepaper's "transport for a decentralized protocol": machines exchange signed records and the trust logic stays in each client, with no relay server to run or trust. A report owned by the finder's wallet can't be edited by the publisher, by Shankh, or by anyone who takes over our infrastructure — and with `readonly`, not even by the reporter.
 - **Privacy by design:** reads are by reporter, never by package, so the query reveals nothing about what's installed.
-- Writer wallet: `0xDcbe075a907960951Cd4df379BB21461097eEa91`. Required docs: `arkiv/schema.md`, `friction.md`, `reach.md`, `why-arkiv.md`, `how-you-use-arkiv.md`. Seven pieces of first-hand feedback are in `docs/feedback/arkiv.md`.
+- Writer wallet: `0xDcbe075a907960951Cd4df379BB21461097eEa91`. Required docs: `arkiv/schema.md`, `friction.md`, `reach.md`, `why-arkiv.md`, `how-you-use-arkiv.md`. Eight pieces of first-hand feedback are in `docs/feedback/arkiv.md`.
 
 ## Track: Ethereum Foundation — Best CROPS App
 
@@ -117,7 +118,7 @@ Alternative, if you'd rather point at the reading side: https://github.com/krish
 ### Arkiv
 
 **Why we qualify:**
-> Every `shankh verify` writes a signed `shankh.report` to the Arkiv testnet, and `shankh scan --trust` reads trusted reporters' recent reports back with `createdBy` and acts on them: it re-checks the named build locally and flags it. That loop ran live across two machines, so Arkiv is the alarm machines send each other, not a write-only log.
+> Every `shankh verify` writes a signed `shankh.report` to the Arkiv testnet, and `shankh scan --trust` reads trusted reporters' recent reports back with `createdBy` and acts on them: it re-checks the named build locally and flags it. Every alarm is created read-only and extendable by anyone, so nobody can quietly edit it and every machine that confirms it keeps it alive. That loop ran live across two machines with separate wallets, so Arkiv is the alarm machines send each other, not a write-only log.
 
 **Line of code:** https://github.com/krishnan74/shankh/blob/885fe08ba7271102acdae838155ecc21f8a1f83b/arkiv/src/report.ts#L87 (`.createdBy(creator)`: reading only reports signed by a trusted reporter)
 

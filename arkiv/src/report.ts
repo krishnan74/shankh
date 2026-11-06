@@ -25,7 +25,19 @@ export type VerificationReport = {
 };
 
 /** How long a report stays live on Arkiv before it needs renewing. See docs/plan.md spike 3 for the ceiling this bumps against. */
-const REPORT_LIFETIME_DAYS = 90;
+export const REPORT_LIFETIME_DAYS = 90;
+
+/**
+ * Every alarm is created with two flags that are fixed for its whole life (arkiv-network/sdk
+ * `CreationFlags`):
+ * - `readonly`: its contents can never be changed. Someone who steals a reporter's key can't
+ *   quietly flip an alarm to "clean" or point it at a different build. (The owner can still delete
+ *   it or transfer it -- read-only is not undeletable.)
+ * - `permissionlessExtension`: anyone, not only the reporter, can extend its lifetime -- so every
+ *   machine that confirms a bad build can keep the alarm alive, without being able to change it.
+ * Reports written before this change have neither flag.
+ */
+export const ALARM_FLAGS = { readonly: true, permissionlessExtension: true } as const;
 
 export async function writeReport(report: VerificationReport) {
   const client = arkivWalletClient();
@@ -41,8 +53,29 @@ export async function writeReport(report: VerificationReport) {
       artifactSha256: str(report.artifactSha256 ?? ""),
       ensRevoked: bool(report.ensRevoked ?? false),
     },
-    { expiration: ExpirationTime.fromDays(REPORT_LIFETIME_DAYS) },
+    { expiration: ExpirationTime.fromDays(REPORT_LIFETIME_DAYS), flags: ALARM_FLAGS },
   );
+}
+
+/**
+ * Keep someone else's alarm alive: push its expiry out to REPORT_LIFETIME_DAYS from now. Works on
+ * any alarm created with `permissionlessExtension`, whoever wrote it -- this is what a machine does
+ * after re-checking an alarm and confirming it. It can't change what the alarm says.
+ */
+export async function extendReport(entityKey: Hex, days = REPORT_LIFETIME_DAYS) {
+  const client = arkivWalletClient();
+  return client.extendEntity({ entityKey, expiration: ExpirationTime.fromDays(days) });
+}
+
+/** An alarm's creation flags, owner and expiry, read back from the chain. */
+export async function alarmFlags(entityKey: Hex) {
+  const entity = await arkivPublicClient().getEntity(entityKey);
+  return {
+    owner: entity.$owner,
+    expiresAt: entity.$expiresAt,
+    readonly: entity.$creationFlags?.readonly ?? false,
+    permissionlessExtension: entity.$creationFlags?.permissionlessExtension ?? false,
+  };
 }
 
 /** Has anyone already reported on this package@version? Used by a second machine to skip its own rebuild. */

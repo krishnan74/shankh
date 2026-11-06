@@ -38,7 +38,13 @@ from shankh import kill as kill_mod
 from shankh import trust as trust_mod
 from shankh import verify as verify_mod
 from shankh.inventory import InstalledPackage, build_fingerprint, installed_packages
-from shankh.report import ReportReadError, ReportWriteError, read_reports, write_report
+from shankh.report import (
+    ReportReadError,
+    ReportWriteError,
+    extend_report,
+    read_reports,
+    write_report,
+)
 from shankh.scan import check_alarms, match
 from shankh.trust import TrustedReporter
 from shankh.verify import RiskTier, VerifyResult
@@ -59,6 +65,7 @@ class Watcher:
     sweep: Callable[[], dict[str, set[str]]]
     read_reports: Callable[[list[str]], list[dict]]
     write_report: Callable[[VerifyResult], dict] | None  # None: don't post to Arkiv
+    extend_report: Callable[[str], dict] | None = None  # keeps a confirmed alarm alive; None: don't
     respond: Callable[[kill_mod.Compromise], kill_mod.KillOutcome] = kill_mod.respond
     seen_builds: set[tuple[str, str, str]] = field(default_factory=set)  # (name, version, fingerprint) already rebuilt or baselined
     handled_reports: set[str] = field(default_factory=set)  # Arkiv entity keys already re-checked
@@ -126,7 +133,7 @@ class Watcher:
         retry: set[str] = set()
         for alarm in check_alarms(unsettled, fresh, self.reporters, self.verify):
             if alarm.outcome == "confirmed" and alarm.recheck is not None:
-                self._act(alarm.recheck, "arkiv", f"alarm from {alarm.reporter}, re-checked here: {alarm.detail}")
+                self._act(alarm.recheck, "arkiv", f"alarm from {alarm.reporter}, re-checked here: {alarm.detail}", alarm.report_key)
             elif alarm.outcome == "not-confirmed":
                 log(f"alarm from {alarm.reporter} about {alarm.package}=={alarm.version} didn't hold up here -- ignored")
             else:
@@ -136,7 +143,7 @@ class Watcher:
         # is done with, so it isn't re-filtered or re-rebuilt every round.
         self.handled_reports |= {str(r.get("key", "")) for r in fresh} - retry
 
-    def _act(self, result: VerifyResult, source: str, detail: str) -> None:
+    def _act(self, result: VerifyResult, source: str, detail: str, alarm_key: str | None = None) -> None:
         key = (result.package, result.version, result.build_fingerprint)
         if key in self.alerted:
             return
@@ -152,6 +159,13 @@ class Watcher:
                 log(f"  posted to Arkiv: {written['entityKey']}")
             except ReportWriteError as exc:
                 log(f"  could not post to Arkiv: {exc}")
+        if self.extend_report is not None and alarm_key:
+            # Confirmed someone else's alarm: keep it alive. It can't be edited, only extended.
+            try:
+                extended = self.extend_report(alarm_key)
+                log(f"  kept the alarm alive for another 90 days (tx {extended['txHash']})")
+            except ReportWriteError as exc:
+                log(f"  could not extend the alarm: {exc}")
         outcome = self.respond(compromise)
         log(f"  kill: {outcome.summary}")
 
@@ -219,6 +233,7 @@ def run(
         sweep=ens.sweep,
         read_reports=read_reports,
         write_report=write_report if report else None,
+        extend_report=extend_report if report else None,
     )
     count = watcher.baseline(verify_existing)
     where = describe_environment(site_packages)

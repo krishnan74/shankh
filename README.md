@@ -31,7 +31,7 @@ The landing page's section 03 has a diagram of how ENS, Arkiv and the Ethereum F
 | `shankhd` — the watcher: rebuilds every new install as it lands, sweeps ENS and trusted Arkiv alarms every minute | runs locally | a poisoned package installed while it ran was caught 2s later with no command typed, finding posted to Arkiv: entity `0x574edd31…cf10` |
 | `shankh scan --trust` — act on trusted reporters' Arkiv alarms | runs locally, reads Sepolia + Arkiv | machine A posted entity `0xe7d2102e…7ec0`; machine B read it, re-checked it locally, COMPROMISED |
 | Reporter identity `shankh-team.reporters.shankh.eth` | Sepolia, registry `0x9b833a137cf9e24200394cb9a3af5df13b1db28e` (emancipated) | `shankh.signer` → `0xDcbe075a907960951Cd4df379BB21461097eEa91`, writable only by that wallet |
-| `shankh.report` entities | Arkiv testnet (chain 7794095) | written by `0xDcbe075a907960951Cd4df379BB21461097eEa91` |
+| `shankh.report` entities | Arkiv testnet (chain 7794095) | written by `0xDcbe075a907960951Cd4df379BB21461097eEa91` (and demo machine B, `0xD7290D56042105e64FF16BE6CACC2da6E958bC5c`). Created `readonly` + extendable by anyone: an edit by the alarm's own owner was refused live, and a second wallet extended it — alarm `0x6a1c8ffc…76f7` |
 | Landing page and `/registry` | Vercel, https://shankh-eth.vercel.app and https://shankh-eth.vercel.app/registry | read ENS, the `KillSwitch`, and Arkiv live on every request — no hard-coded state. `/registry` lists every package under `pypi.shankh.eth` with its maintainer's bad-builds list and the Arkiv alarms about it |
 
 Every address, transaction and entity: [`docs/evidence.md`](docs/evidence.md). The two "machines" in the Arkiv demo are two throwaway Python environments on one laptop, both using the demo wallet.
@@ -94,7 +94,7 @@ No analytics or third-party trackers on the landing page.
 - **The key shut-off isn't built.** Today Shankh detects and warns; it doesn't yet quarantine or deactivate AWS keys. The AWS sandbox for it hasn't been set up.
 - **The watcher's memory is per run.** `shankhd` rebuilds every new install and re-sweeps ENS and Arkiv every minute, but on restart it treats what's already installed as the baseline (`--verify-existing` rebuilds it all) and doesn't run as a system service yet.
 - **Python packages only.** Docker images and other ecosystems are in the design, not the code.
-- **`KillSwitch.sol` is reviewed, not audited.** The team reviewed it line by line; it has 3 Foundry tests and no external audit. Testnet only.
+- **`KillSwitch.sol` is reviewed, not audited.** The team reviewed it line by line; it has 6 Foundry tests and no external audit. Testnet only.
 - **One wallet plays every role in the demo** — operator, maintainer, and reporter — so the live demos show the mechanism, not independent parties.
 - **Re-checks rebuild from PyPI's source archive.** A package with no source archive, or a malicious change that's also in the published source, isn't caught by the rebuild (the ENS and Arkiv signals still apply).
 - **Testnets only:** Sepolia and the Arkiv testnet. Public RPC latency is 5–8s per call on a bad network; a scan takes 10–20s.

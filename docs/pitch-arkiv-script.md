@@ -56,9 +56,15 @@ About three and a half minutes, conversational. Pitches **Shankh as it will be i
 
 > "Machine B scans again. The alarm is there. It's from a reporter machine B trusts, and it names the exact build machine B has installed. But machine B doesn't just take its word for it. It re-checks on its own, gets the same answer, and only then says compromised."
 
-> "In the final version, that's the moment its cloud keys get locked down. That part isn't built yet; what you just saw is the detection and the warning, live."
+> "And machine B doesn't stop there. With its own wallet, it posts its own confirmation and keeps machine A's alarm alive for another 90 days. Anyone who confirms an alarm can extend it like that, but nobody can change what it says."
+
+*(Point at the last two lines: `confirmation reported to Arkiv` and `kept the original alarm alive`.)*
+
+> "In the final version, that's also the moment its cloud keys get locked down. That part isn't built yet; what you just saw is the detection and the warning, live."
 
 ## 5. Why you can't fake an alarm
+
+> "And once an alarm is posted, it can't be quietly changed. We create every alarm read-only on Arkiv. We tested it: even the wallet that wrote the alarm tried to flip it to 'clean', and the chain refused. So if someone steals a reporter's key, they can't rewrite history."
 
 > "Two things stop someone from spamming fake alarms. First, trust is by name: you pick reporters like `shankh-team.reporters.shankh.eth`, and that ENS name says which wallet they sign with. Only they can change it. We filter on the wallet Arkiv itself records as the creator, not on anything the writer typed in. Second, every alarm gets re-checked locally. A fake alarm about a clean package just gets ignored."
 
@@ -76,7 +82,9 @@ About three and a half minutes, conversational. Pitches **Shankh as it will be i
 
 ## If they ask...
 
-- **"Both machines are on your laptop?"** Yes, two separate throwaway environments. And both use the demo wallet, which is why machine B doesn't post a second report: a confirmation from the same wallet isn't an independent witness.
+- **"Both machines are on your laptop?"** Yes, two separate throwaway environments, but each signs with its own wallet, so machine B's confirmation really is a second, independent witness.
+- **"Read-only means it can never be removed?"** No, and we say so: the owner can still delete or transfer it. Read-only means nobody can *edit* it. That's what stops a stolen key from flipping an alarm to "clean". We've suggested an append-only flag to the Arkiv team.
+- **"Which Arkiv pattern is this?"** Their litepaper's "transport for a decentralized protocol": signed records between clients, the logic in the clients, no relay server. Plus "immutable and extendable by anyone, so readers who value it keep it alive", which is exactly how alarms survive.
 - **"Why not just a database?"** A database has an owner who can be hacked, pressured, or shut down, and every reader has to trust them. An Arkiv entity is signed by whoever found the problem, and anyone can read it.
 - **"Why ENS too?"** Different jobs. Arkiv holds what anyone finds. ENS holds the maintainer's own bad-builds list and the names of reporters you trust. Both are needed so no single party can silence the alarm.
 - **"What's in a report?"** Package, version, risk tier, malicious yes/no, which files were wrong, the build fingerprint, and whether the maintainer has flagged it. See `arkiv/schema.md`.

@@ -106,11 +106,14 @@ def test_an_arkiv_alarm_is_rechecked_once_and_not_reposted() -> None:
         "key": "0xalarm", "creator": TRUSTED.signer, "package": "shankh-demo", "version": "1.0.0",
         "malicious": True, "artifactSha256": build_fingerprint(POISONED),
     }]
+    extended: list[str] = []
+    w.extend_report = lambda key: extended.append(key) or {"txHash": "0xext"}
     w.check_alarms()
     w.check_alarms()
     assert w.verified == [("shankh-demo", "1.0.0")]  # one rebuild, not one per round
     assert [(c.package, c.source) for c in w.compromises] == [("shankh-demo", "arkiv")]
     assert w.written == []  # the reporter already posted it
+    assert extended == ["0xalarm"]  # ...but this machine keeps it alive, once
 
 
 def test_an_unreachable_chain_or_arkiv_is_logged_and_retried_never_fatal() -> None:
@@ -136,3 +139,13 @@ def test_the_watched_environment_is_named_by_its_folder_not_its_site_packages_pa
     other = tmp_path / "plain-dir"
     other.mkdir()
     assert describe_environment(str(other)) == "./plain-dir"
+
+
+def test_own_findings_are_posted_but_never_extended() -> None:
+    extended: list[str] = []
+    w = FakeWatcher()
+    w.extend_report = lambda key: extended.append(key) or {"txHash": "0xext"}
+    w.baseline()
+    w.packages = [POISONED]
+    w.check_installs()
+    assert len(w.written) == 1 and extended == []
