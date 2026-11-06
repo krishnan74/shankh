@@ -16,6 +16,9 @@
   --text-tertiary: rgba(22, 22, 26, 0.42);
   --accent: #0a7a6e;
   --accent-contrast: #f3fffb;
+  /* An inverted panel's surface is the opposite theme's, so its accent must be too -- otherwise
+     dark-mode teal (#2dd4bf) on an inverted light panel drops to ~1.6:1 and fails WCAG AA. */
+  --accent-inverse: #2dd4bf;
 }
 
 :root:not([data-theme="light"]) {
@@ -28,6 +31,7 @@
     --text-tertiary: rgba(243, 242, 239, 0.42);
     --accent: #2dd4bf;
     --accent-contrast: #06201c;
+    --accent-inverse: #0a7a6e;
   }
 }
 
@@ -40,6 +44,11 @@
   --text-tertiary: rgba(243, 242, 239, 0.42);
   --accent: #2dd4bf;
   --accent-contrast: #06201c;
+  --accent-inverse: #0a7a6e;
+}
+
+.tone-inverted {
+  --accent: var(--accent-inverse);
 }
 
 @theme inline {
@@ -73,6 +82,14 @@ body {
 ::selection {
   background: var(--accent);
   color: var(--accent-contrast);
+}
+
+/* Visible, on-brand keyboard focus everywhere -- the accent marks "you are here" as it marks
+   "Shankh acts here" elsewhere. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* playbook #2: one utility for every uppercase/tracked/mono micro-label -- kickers, status
@@ -121,5 +138,74 @@ body {
   }
   .pulse {
     animation: pulse-ring 2.2s var(--ease) infinite;
+  }
+
+  /* The conch ripple (ConchRipple) and the race timeline (RaceTimeline) both draw once on enter,
+     gated off the same [data-reveal="in"] attribute Reveal already sets -- no separate JS
+     trigger, one state drives every "this appeared, now draw" animation on the page. */
+  .ripple-ring {
+    /* pathLength="1" on each circle normalizes every ring to length 1, so one dash value fully
+       draws rings of any radius */
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    opacity: 0;
+    transition: stroke-dashoffset 1.4s var(--ease), opacity 0.4s var(--ease);
+  }
+  [data-reveal="in"] .ripple-ring {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  .ripple-node {
+    opacity: 0;
+    transform: scale(0.6);
+    transform-origin: center;
+    transition: opacity 0.5s var(--ease), transform 0.5s var(--ease);
+  }
+  [data-reveal="in"] .ripple-node {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .track-draw {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 1.1s var(--ease);
+  }
+  [data-reveal="in"] .track-draw {
+    transform: scaleX(1);
+  }
+}
+
+/* Presenter rail (lg+ only) -- a fixed scrollspy down the left edge, the beats of the 3-minute
+   script as jump links. Hidden on mobile; the in-flow kickers already carry the same timestamps
+   there, so nothing is lost, just the persistent rail chrome. */
+.presenter-rail {
+  position: fixed;
+  top: 50%;
+  left: 1.5rem;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: none;
+}
+@media (min-width: 1024px) {
+  .presenter-rail {
+    display: flex;
+  }
+}
+
+/* The copy-to-clipboard toast -- one line, mono, dismisses itself. */
+@media (prefers-reduced-motion: no-preference) {
+  .toast-enter {
+    animation: toast-in 0.25s var(--ease);
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }

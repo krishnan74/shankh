@@ -1,46 +1,97 @@
 import { connection } from "next/server";
 import { recentReports } from "@/lib/arkiv";
+import { latestBlockInfo } from "@/lib/chain";
 import { packageEnsInfo } from "@/lib/ens";
 import { killSwitchInfo } from "@/lib/killswitch";
-import { Hero, Hook, WhyNow, HonestClose, MechanismList, SiteFooter } from "@/components/sections";
-import { Card, Code, Detail, RevertProof, SectionHeader, Terminal, TIER_STYLE } from "@/components/ui";
+import { attackProofs } from "@/lib/proofs";
+import { pypiRegistryInfo, shankhRegistryAddress } from "@/lib/registry";
+import { EnsTree } from "@/components/ens-tree";
+import { LedgerTable } from "@/components/ledger-table";
+import { PresenterRail } from "@/components/presenter-rail.client";
+import { RaceTimeline } from "@/components/race-timeline";
+import { ReportFeed } from "@/components/report-feed";
 import { Reveal } from "@/components/reveal";
+import { Hero, HonestClose, SiteFooter, Stepper, TrackColumns, WhyNowCases } from "@/components/sections";
+import { Terminal } from "@/components/terminal.client";
+import { TopBar } from "@/components/topbar";
+import { Detail, SectionHeader } from "@/components/ui";
 
 // Blocking dynamic render, no static shell -- the whole point is every request reads live.
 export const instant = false;
 
-const etherscan = (address: string) => `https://sepolia.etherscan.io/address/${address}`;
+/** Section divider: a hairline with a tiny conch mark at its start -- the ripple motif, quiet. */
+function Divider() {
+  return (
+    <div className="flex items-center gap-3 pt-14" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="3" fill="var(--accent)" />
+        <circle cx="20" cy="20" r="9" stroke="var(--accent)" strokeOpacity="0.4" />
+        <circle cx="20" cy="20" r="16" stroke="var(--accent)" strokeOpacity="0.2" />
+      </svg>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  );
+}
 
 export default async function Home() {
   await connection(); // forces per-request dynamic rendering -- without this, cacheComponents would prerender this page statically at build time and freeze whatever it saw then, which is exactly the hard-coded-values failure mode the ENS track rules out
 
-  const [reports, killSwitch, packageEns] = await Promise.all([
+  const [reports, killSwitch, packageEns, block, pypiRegistry] = await Promise.all([
     recentReports().catch(() => null),
     killSwitchInfo().catch(() => null),
     packageEnsInfo().catch(() => null),
+    latestBlockInfo().catch(() => null),
+    pypiRegistryInfo().catch(() => null),
   ]);
-
-  const previewReports = reports?.slice(0, 2) ?? [];
-  const restReports = reports?.slice(2) ?? [];
+  // The attack simulations run as the address that deployed the tree -- read live from KillSwitch.
+  const proofs = killSwitch ? await attackProofs(killSwitch.maintainer).catch(() => null) : null;
+  const shankhRegistry = shankhRegistryAddress();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-10 px-6 pb-20 sm:px-10">
-      <Hero />
-      <Hook />
+    <>
+      <PresenterRail />
+      {/* overflow-x: clip (not hidden) contains the hero ripple's bleed without creating a scroll
+          container, so the sticky top bar keeps working */}
+      <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col overflow-x-clip px-6 pb-20 sm:px-10">
+        <TopBar blockNumber={block?.blockNumber ?? null} />
 
-      {/* Script beat 2, 0:25-1:10 -- "The real proof: detection and the tamper-proof alarm."
-          Embedded in the narrative, not linked out (playbook #1, #7). The terminal transcript is
-          a real, previously-run command against a real malicious wheel -- see docs/evidence.md
-          for the exact entity key and tx hash reproduced below. */}
-      <Reveal>
-        <section id="proof" className="flex flex-col gap-6 border-t border-border pt-10">
-          <SectionHeader
-            kicker="00:25 — Live proof"
-            headline="Watch it prove itself."
-            lede="A real malicious wheel, rebuilt and diffed against its public source, in a sandbox. The result gets signed and published to Arkiv — not our database."
-          />
-          <div className="sm:pl-[25%]">
+        <Hero
+          latestReport={reports?.[0] ?? null}
+          reportCount={reports?.length ?? null}
+          revokedCount={packageEns ? packageEns.revokedArtifacts.length : null}
+          killSwitchAddress={killSwitch?.address ?? null}
+        />
+
+        {/* 00:00 -- the hook: same attack, two clocks */}
+        <Divider />
+        <section className="flex flex-col gap-8 pt-8">
+          <div className="mx-auto w-full max-w-3xl">
+            <SectionHeader
+              id="beat-hook"
+              kicker="00:00 — The hook"
+              headline="Same attack. Two clocks."
+              lede="The real LiteLLM 1.107.0 timeline, against the path Shankh is designed to take. A public leak gets killed by AWS in ~10 seconds; a malware theft got hours."
+            />
+          </div>
+          <Reveal>
+            <RaceTimeline />
+          </Reveal>
+        </section>
+
+        {/* 00:25 -- live proof */}
+        <Divider />
+        <section className="flex flex-col gap-8 pt-8">
+          <div className="mx-auto w-full max-w-3xl">
+            <SectionHeader
+              id="beat-proof"
+              kicker="00:25 — Live proof"
+              headline="This isn't a mockup."
+              lede="A real malicious wheel, rebuilt and diffed against its public source. The result is signed to Arkiv — not our database — and read back below, live."
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
             <Terminal
+              title="shankh verify evilpkg==1.0.0 — recorded run"
               lines={[
                 { prompt: true, text: "shankh verify evilpkg==1.0.0 --find-links ./replay-index" },
                 { text: "evilpkg==1.0.0: CRITICAL", tone: "accent" },
@@ -51,245 +102,75 @@ export default async function Home() {
                 },
               ]}
             />
-          </div>
-
-          <div className="sm:pl-[25%]">
-            <Card className="flex flex-col gap-3 text-sm">
-              <p className="label text-xs text-accent">✓ read live, Arkiv testnet</p>
-              <p className="font-medium">Recent shankh.report entities</p>
-              {reports === null ? (
-                <p className="text-text-tertiary">
-                  Could not reach Arkiv — check <Code>ARKIV_RPC_URL</Code>/<Code>ARKIV_ACCESS_KEY</Code>.
-                </p>
-              ) : reports.length === 0 ? (
-                <p className="text-text-tertiary">
-                  No reports yet. Run <Code>shankh verify</Code> to write one.
-                </p>
-              ) : (
-                <>
-                  <ul className="flex flex-col gap-2">
-                    {previewReports.map((report) => (
-                      <li key={report.key} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
-                        <span className="font-mono text-xs">
-                          {report.package}=={report.version}
-                        </span>
-                        <span className={`rounded px-2 py-0.5 text-xs font-medium uppercase ${TIER_STYLE[report.tier] ?? ""}`}>
-                          {report.tier}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  {restReports.length > 0 && (
-                    <p className="text-xs text-text-tertiary">+{restReports.length} more in the full ledger below.</p>
-                  )}
-                </>
-              )}
-            </Card>
+            <ReportFeed reports={reports} />
           </div>
         </section>
-      </Reveal>
 
-      {/* Script beat 3, 1:10-2:10 -- "What an attacker can't touch." The ENS proof: live state
-          plus the actual revert errors from the real deployment run (docs/build-log.md), not a
-          paraphrase of them -- this is the demo's central claim, made falsifiable. */}
-      <Reveal>
-        <section className="flex flex-col gap-6 border-t border-border pt-10">
-          <SectionHeader
-            kicker="01:10 — What an attacker can't touch"
-            headline="We gave up the power to undo this. Here's what happens when we try."
-            lede="pypi.shankh.eth is emancipated — every dangerous root role permanently revoked, including our own. Each package's resolver splits write access two ways, with zero overlap."
-          />
-
-          <div className="grid grid-cols-12 gap-4 sm:pl-[25%]">
-            <Reveal className="col-span-12 sm:col-span-6">
-              <Card className="flex h-full flex-col gap-2 text-sm">
-                <p className="label text-xs text-accent">✓ read live, Sepolia</p>
-                <p className="font-medium">ENS tree — shankh-demo.pypi.shankh.eth</p>
-                {packageEns ? (
-                  <>
-                    <div>
-                      resolver:{" "}
-                      <a href={etherscan(packageEns.resolver)} className="underline decoration-border underline-offset-2 hover:text-accent">
-                        <Code>{packageEns.resolver}</Code>
-                      </a>
-                    </div>
-                    <div className="truncate" title={packageEns.source ?? undefined}>
-                      shankh.source: <Code>{packageEns.source ?? "(not set)"}</Code>
-                    </div>
-                    <div>
-                      shankh.revoked:{" "}
-                      {packageEns.revokedArtifacts.length === 0 ? (
-                        <span className="text-text-tertiary">none</span>
-                      ) : (
-                        <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950 dark:text-red-300">
-                          {packageEns.revokedArtifacts.length} artifact(s) revoked
-                        </span>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-text-tertiary">
-                    Not configured — set <Code>PACKAGE_RESOLVER_ADDRESS</Code>.
-                  </p>
-                )}
-              </Card>
-            </Reveal>
-
-            <Reveal delayMs={80} className="col-span-12 sm:col-span-6">
-              <Card className="flex h-full flex-col gap-2 text-sm">
-                <p className="label text-xs text-accent">✓ read live, Sepolia</p>
-                <p className="font-medium">KillSwitch — the only writer of shankh.revoked</p>
-                {killSwitch ? (
-                  <>
-                    <div>
-                      contract:{" "}
-                      <a href={etherscan(killSwitch.address)} className="underline decoration-border underline-offset-2 hover:text-accent">
-                        <Code>{killSwitch.address}</Code>
-                      </a>
-                    </div>
-                    <div>
-                      maintainer: <Code>{killSwitch.maintainer}</Code>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-text-tertiary">
-                    Not configured — set <Code>KILLSWITCH_ADDRESS</Code>.
-                  </p>
-                )}
-              </Card>
-            </Reveal>
-
-            <Reveal delayMs={160} className="col-span-12">
-              <RevertProof
-                attempt="We tried to re-grant the revoked roles to ourselves, after emancipation"
-                error="EACCannotGrantRoles(0, 7237005577332262213973186563140405376786684291341514916453779499572452659456, 0xDcbe075a907960951Cd4df379BB21461097eEa91)"
-              />
-            </Reveal>
-            <Reveal delayMs={240} className="col-span-12">
-              <RevertProof
-                attempt="We tried to write shankh.revoked directly, after the resolver's broad grant was revoked"
-                error="EACUnauthorizedAccountRoles(2844021095337237841129806607665185525430769143835556004274213054207323074410, 16, 0xDcbe075a907960951Cd4df379BB21461097eEa91)"
-              />
-            </Reveal>
+        {/* 01:10 -- what an attacker can't touch */}
+        <Divider />
+        <section className="flex flex-col gap-8 pt-8">
+          <div className="mx-auto w-full max-w-3xl">
+            <SectionHeader
+              id="beat-untouchable"
+              kicker="01:10 — What an attacker can't touch"
+              headline="The alarm lives where the hacker can't reach."
+              lede="We gave up the power to seize this tree — and each attack below is re-tried against live Sepolia every time this page loads."
+            />
           </div>
+          <Reveal>
+            <EnsTree
+              shankhRegistry={shankhRegistry}
+              pypiRegistry={pypiRegistry}
+              packageEns={packageEns}
+              killSwitch={killSwitch}
+              proofs={proofs}
+            />
+          </Reveal>
         </section>
-      </Reveal>
 
-      <WhyNow />
-      <HonestClose />
+        {/* 02:10 -- why now */}
+        <Divider />
+        <section className="mx-auto flex w-full max-w-3xl flex-col gap-8 pt-8">
+          <SectionHeader id="beat-why-now" kicker="02:10 — Why this matters now" headline="It already happened. Twice." />
+          <Reveal>
+            <WhyNowCases />
+          </Reveal>
+        </section>
 
-      {/* Progressive disclosure (landing-page-playbook.md #6): the pitch above now follows the
-          demo script's own beats and reads in under three minutes; everything needed for rigor
-          but not for the pitch -- the step-by-step mechanism, per-track deep dives, the raw
-          activity log -- is one click away, not mandatory reading. */}
-      <Reveal>
-        <section className="flex flex-col gap-6 border-t border-border pt-10">
+        {/* 02:45 -- the honest close */}
+        <Divider />
+        <section className="flex flex-col gap-8 pt-8">
+          <div className="mx-auto w-full max-w-3xl">
+            <SectionHeader id="beat-close" kicker="02:45 — The honest close" headline="What you just saw is real." />
+          </div>
+          <HonestClose />
+        </section>
+
+        {/* Progressive disclosure */}
+        <Divider />
+        <section id="ledger" className="mx-auto flex w-full max-w-3xl scroll-mt-24 flex-col gap-6 pt-8">
           <SectionHeader kicker="More detail" headline="Everything else." />
           <div className="sm:pl-[25%]">
-            <Detail summary="How it works, step by step">
-              <MechanismList />
+            <Detail summary="01 · How it works, step by step">
+              <Stepper />
             </Detail>
-
-            <Detail summary="Partner track alignment — ENS, Ethereum Foundation, Arkiv">
-              <div className="flex flex-col gap-4">
-                <div>
-                  <p className="mb-1 font-medium text-foreground">ENS — Best Use of ENSv2</p>
-                  <p>
-                    ENS as a permission system, not a lookup table: an emancipated package registry
-                    Shankh itself can&rsquo;t seize, and a per-package resolver where the maintainer
-                    and the KillSwitch each hold their own scoped, non-overlapping write grant.
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-1 font-medium text-foreground">Ethereum Foundation — Best CROPS App</p>
-                  <p>
-                    Credibly neutral by construction: every client reads ENS state directly. Turn
-                    this status page and the backend off, and <code className="font-mono">shankh verify</code> still
-                    verifies and kills locally — the CROPS moment.
-                  </p>
-                </div>
-                <div>
-                  <p className="mb-1 font-medium text-foreground">Arkiv — Build on Arkiv</p>
-                  <p>
-                    <code className="font-mono">shankh.report</code> is how one victim&rsquo;s catch becomes
-                    everyone else&rsquo;s protection: signed evidence, explicit per-reporter trust, local
-                    re-verification before any kill — never a blind, shared database.
-                  </p>
-                </div>
-              </div>
+            <Detail summary="02 · Partner track alignment">
+              <TrackColumns pypiRegistry={pypiRegistry?.address ?? null} killSwitch={killSwitch?.address ?? null} />
             </Detail>
-
-            <Detail summary="Full on-chain ledger">
-              <div className="flex flex-col gap-4">
-                {killSwitch && (
-                  <div>
-                    <p className="mb-1 font-medium text-foreground">KillSwitch</p>
-                    <a href={etherscan(killSwitch.address)} className="underline decoration-border underline-offset-2 hover:text-accent">
-                      <Code>{killSwitch.address}</Code>
-                    </a>
-                  </div>
-                )}
-                {packageEns && (
-                  <div>
-                    <p className="mb-1 font-medium text-foreground">Resolver — shankh-demo.pypi.shankh.eth</p>
-                    <a href={etherscan(packageEns.resolver)} className="underline decoration-border underline-offset-2 hover:text-accent">
-                      <Code>{packageEns.resolver}</Code>
-                    </a>
-                    {packageEns.revokedArtifacts.length > 0 && (
-                      <ul className="mt-2 flex flex-col gap-0.5 font-mono text-xs">
-                        {packageEns.revokedArtifacts.map((hash) => (
-                          <li key={hash} className="truncate">
-                            revoked: {hash}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                )}
-                {reports && reports.length > 0 && (
-                  <div>
-                    <p className="mb-1 font-medium text-foreground">All shankh.report entities ({reports.length})</p>
-                    <ul className="flex flex-col gap-2">
-                      {reports.map((report) => (
-                        <li key={report.key} className="rounded-lg border border-border p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="font-mono text-xs">
-                              {report.package}=={report.version}
-                            </span>
-                            <span className={`rounded px-2 py-0.5 text-xs font-medium uppercase ${TIER_STYLE[report.tier] ?? ""}`}>
-                              {report.tier}
-                            </span>
-                          </div>
-                          <div className="mt-1 truncate text-xs text-text-tertiary" title={report.reporter}>
-                            reported by {report.reporter}
-                          </div>
-                          {report.findings.length > 0 && (
-                            <ul className="mt-2 flex flex-col gap-0.5 font-mono text-xs">
-                              {report.findings.map((finding) => (
-                                <li key={finding.relativePath}>
-                                  [{finding.tier}] {finding.relativePath}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          <div className="mt-2 truncate text-xs text-text-tertiary" title={report.key}>
-                            {report.key}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {!killSwitch && !packageEns && (!reports || reports.length === 0) && (
-                  <p>Nothing configured yet — see the environment variables noted above.</p>
-                )}
-              </div>
+            <Detail summary="03 · Full on-chain ledger">
+              <LedgerTable
+                shankhRegistry={shankhRegistry}
+                pypiRegistry={pypiRegistry}
+                packageEns={packageEns}
+                killSwitch={killSwitch}
+                reports={reports}
+              />
             </Detail>
           </div>
         </section>
-      </Reveal>
 
-      <SiteFooter />
-    </main>
+        <SiteFooter />
+      </main>
+    </>
   );
 }
