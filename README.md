@@ -1,3 +1,5 @@
+<p align="center"><img src="status-page/public/logo-mark.png" width="96" alt="Shankh logo: a conch spiral cut into the Ethereum diamond"></p>
+
 # Shankh
 
 When a package you installed turns out to be malicious, the warning reaches every other machine running it in seconds — and the alarm lives on ENS and Arkiv, where the attacker who hijacked the publisher can't silence it.

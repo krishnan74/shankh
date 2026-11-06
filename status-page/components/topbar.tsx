@@ -1,17 +1,11 @@
 import { ThemeToggle } from "./theme-toggle.client";
 
 function ConchMark() {
-  // A simple spiral/ripple glyph -- the brand mark, pure SVG, no image request.
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M12 21c-4 0-7-2.5-7-6.5S8 6 12 6s6 3 6 6-2.5 5-5.5 5-4.5-1.8-4.5-4 1.5-3.5 3.5-3.5 2.5 1.2 2.5 2.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
+  // The brand mark: a conch spiral cut into the Ethereum diamond. A 256px transparent PNG
+  // (public/logo-mark.png, cropped from the repo-root logo.png) shown at 22px, so it stays sharp
+  // on 2x/3x screens. Decorative -- the wordmark next to it carries the name.
+  // eslint-disable-next-line @next/next/no-img-element -- a fixed 25 KB asset; next/image adds nothing here
+  return <img src="/logo-mark.png" width={22} height={22} alt="" aria-hidden="true" className="block" />;
 }
 
 export function TopBar({ blockNumber }: { blockNumber: bigint | null }) {
@@ -19,9 +13,7 @@ export function TopBar({ blockNumber }: { blockNumber: bigint | null }) {
     <div className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
       <div className="flex items-center gap-2">
-        <span className="text-accent">
-          <ConchMark />
-        </span>
+        <ConchMark />
         <span className="font-display text-sm font-bold italic">Shankh</span>
       </div>
       <div className="flex items-center gap-4">
