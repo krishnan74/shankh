@@ -13,14 +13,66 @@ export function Code({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** The one micro-label system (landing-page-playbook.md #2): every kicker reads the same way. */
 export function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <p className="label text-xs text-accent">{children}</p>;
+}
+
+export function Card({
+  children,
+  className = "",
+  tone = "surface",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  /** "inverted" marks the solution against the problem next to it (landing-page-playbook.md #3)
+   * -- a separate prop, not a conflicting bg-* override, so Tailwind's utility-collision rule
+   * (stylesheet order, not className order, picks the winner) can't silently undo it. */
+  tone?: "surface" | "inverted";
+}) {
+  const toneClass = tone === "inverted" ? "border-accent/40 bg-foreground text-background" : "border-border bg-surface";
+  return <div className={`rounded-xl border p-5 ${toneClass} ${className}`}>{children}</div>;
+}
+
+/**
+ * The repeating chapter header (landing-page-playbook.md #1, #4): a narrow kicker column and a
+ * wide headline+lede column on the same 12-col grid, so section markers read as a running ledger
+ * down the page instead of each section centering its own title independently.
+ */
+export function SectionHeader({
+  kicker,
+  headline,
+  lede,
+}: {
+  kicker: string;
+  headline: React.ReactNode;
+  lede?: React.ReactNode;
+}) {
   return (
-    <p className="font-mono text-xs font-medium uppercase tracking-[0.18em] text-accent">{children}</p>
+    <div className="grid grid-cols-12 gap-x-6">
+      <div className="col-span-12 sm:col-span-3">
+        <Eyebrow>{kicker}</Eyebrow>
+      </div>
+      <div className="col-span-12 flex flex-col gap-3 sm:col-span-9">
+        <h2 className="font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">{headline}</h2>
+        {lede && <p className="max-w-xl text-text-secondary leading-relaxed">{lede}</p>}
+      </div>
+    </div>
   );
 }
 
-export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+/** One accordion row for the progressive-disclosure section (landing-page-playbook.md #6). Native
+ * <details>/<summary> -- accessible and animation-free by default, styled to match the page. */
+export function Detail({ summary, children }: { summary: string; children: React.ReactNode }) {
   return (
-    <div className={`rounded-xl border border-border bg-surface p-5 ${className}`}>{children}</div>
+    <details className="group border-b border-border py-4 first:pt-0 last:border-b-0">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left font-medium">
+        {summary}
+        <span className="shrink-0 text-text-tertiary transition-transform duration-300 [transition-timing-function:var(--ease)] group-open:rotate-45">
+          +
+        </span>
+      </summary>
+      <div className="pt-3 text-sm leading-relaxed text-text-secondary">{children}</div>
+    </details>
   );
 }

@@ -53,9 +53,15 @@
   --color-accent-contrast: var(--accent-contrast);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-space-grotesk);
-  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-quart-out: cubic-bezier(0.25, 1, 0.5, 1);
+  /* Display/serif headlines only -- per landing-page-playbook.md's three-role type system,
+     never mixed with the body sans or the data-only mono below. */
+  --font-display: var(--font-fraunces);
+}
+
+/* landing-page-playbook.md #5: one easing curve, defined once, reused for every animation on
+   the page (reveals, the CTA's pulse, the accordion marker) -- never a bespoke curve per component. */
+:root {
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
@@ -69,14 +75,51 @@ body {
   color: var(--accent-contrast);
 }
 
+/* playbook #2: one utility for every uppercase/tracked/mono micro-label -- kickers, status
+   chips, tags -- so they read as one system instead of each section inventing its own. */
+.label {
+  font-family: var(--font-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+}
+
+/* playbook #8: a near-invisible static grain, independent of palette -- reads as a considered
+   document rather than a generic SaaS gradient hero. Inline SVG turbulence, no image request,
+   no GPU animation. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 @media (prefers-reduced-motion: no-preference) {
   [data-reveal] {
     opacity: 0;
     transform: translateY(16px);
-    transition: opacity 0.7s var(--ease-expo-out), transform 0.7s var(--ease-expo-out);
+    transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    transition-delay: var(--reveal-delay, 0ms);
   }
   [data-reveal="in"] {
     opacity: 1;
     transform: translateY(0);
+  }
+
+  /* playbook #5: one small looping animation, representing the product's own concept (an
+     alarm/kill-switch pulse) -- not generic decoration, and only on the one primary CTA. */
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 14px color-mix(in srgb, var(--accent) 0%, transparent);
+    }
+  }
+  .pulse {
+    animation: pulse-ring 2.2s var(--ease) infinite;
   }
 }

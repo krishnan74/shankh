@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,12 +12,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Display face for headlines only -- deliberately not the body sans, for the scale/weight
-// contrast that makes a headline read as a headline rather than a bigger paragraph.
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+// Display/serif face for headlines only -- landing-page-playbook.md's three-role type system:
+// a serif statement face for headlines, a boring sans for body, mono reserved for data/labels.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: ["600", "900"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -30,9 +31,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <div className="grain" aria-hidden="true" />
+        {children}
+      </body>
     </html>
   );
 }
