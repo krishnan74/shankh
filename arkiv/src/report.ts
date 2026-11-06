@@ -20,6 +20,8 @@ export type VerificationReport = {
   tier: string;
   malicious: boolean;
   findings: VerificationFinding[];
+  artifactSha256?: string;
+  ensRevoked?: boolean;
 };
 
 /** How long a report stays live on Arkiv before it needs renewing. See docs/plan.md spike 3 for the ceiling this bumps against. */
@@ -36,6 +38,8 @@ export async function writeReport(report: VerificationReport) {
       malicious: bool(report.malicious),
       reporter: addr(client.account.address),
       findings: bytes(stringToHex(JSON.stringify(report.findings))),
+      artifactSha256: str(report.artifactSha256 ?? ""),
+      ensRevoked: bool(report.ensRevoked ?? false),
     },
     { expiration: ExpirationTime.fromDays(REPORT_LIFETIME_DAYS) },
   );
@@ -45,7 +49,15 @@ export async function writeReport(report: VerificationReport) {
 export async function findExistingReport(pkg: string, version: string) {
   const client = arkivPublicClient();
   const page = await client
-    .select({ $key: true, tier: true, malicious: true, reporter: true, findings: true })
+    .select({
+      $key: true,
+      tier: true,
+      malicious: true,
+      reporter: true,
+      findings: true,
+      artifactSha256: true,
+      ensRevoked: true,
+    })
     .from(ShankhReport)
     .where(and(eq("package", pkg), eq("version", version)))
     .fetch();

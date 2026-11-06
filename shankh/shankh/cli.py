@@ -32,6 +32,8 @@ def verify(
     typer.echo(f"{result.package}=={result.version}: {result.tier.value.upper()}")
     for finding in result.findings:
         typer.echo(f"  [{finding.tier.value}] {finding.relative_path}")
+    if result.ens_revoked:
+        typer.echo(f"  [ens] maintainer revoked artifact {result.artifact_sha256} on-chain")
     if report:
         try:
             written = write_report(result)

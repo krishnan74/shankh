@@ -23,6 +23,7 @@ from pathlib import Path
 
 import httpx
 
+from shankh import ens
 from shankh.inventory import installed_package
 
 # How the real LiteLLM 1.107.0 persistence worked: a `.pth` file is auto-executed by Python's site
@@ -52,8 +53,10 @@ class FileFinding:
 class VerifyResult:
     package: str
     version: str
-    tier: RiskTier  # worst finding overall
+    tier: RiskTier  # worst finding overall, after the ENS signal below is folded in
     findings: tuple[FileFinding, ...]
+    artifact_sha256: str = ""  # sha256 of the downloaded sdist archive -- what a maintainer's ENS revoke() targets
+    ens_revoked: bool = False  # kill signal #2 (docs/plan.md Signals): the maintainer revoked this exact artifact
 
     @property
     def is_malicious(self) -> bool:
@@ -149,6 +152,13 @@ def verify(
     with tempfile.TemporaryDirectory(prefix="shankh-verify-") as tmp:
         archive = download_sdist(package, target_version, Path(tmp), index_url=index_url, find_links=find_links)
         published = sdist_hashes(archive)
+        artifact_sha256 = hashlib.sha256(archive.read_bytes()).hexdigest()
+
+    try:
+        revoked = ens.revoked_artifacts(package)
+    except ens.EnsCheckError:
+        revoked = set()  # ENS check configured but failed -- fall back to the rebuild result alone
+    ens_revoked = f"0x{artifact_sha256}" in revoked
 
     findings: list[FileFinding] = []
     for installed_file in installed.files:
@@ -166,4 +176,13 @@ def verify(
             findings.append(FileFinding(relative_path=rel, tier=RiskTier.MODIFIED))
 
     worst = max((f.tier for f in findings), key=lambda t: t.severity, default=RiskTier.MATCH)
-    return VerifyResult(package=package, version=target_version, tier=worst, findings=tuple(findings))
+    if ens_revoked:
+        worst = RiskTier.CRITICAL  # the maintainer's own revocation overrides a clean rebuild
+    return VerifyResult(
+        package=package,
+        version=target_version,
+        tier=worst,
+        findings=tuple(findings),
+        artifact_sha256=artifact_sha256,
+        ens_revoked=ens_revoked,
+    )

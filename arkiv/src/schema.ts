@@ -19,6 +19,12 @@ export const ShankhReport = defineSchema("shankh.report", {
   // A `str` column caps out at 128 UTF-8 bytes (the SDK's MAX_STRING_BYTES); a real finding list
   // routinely exceeds that, so this has to be `bytes` -- not queryable itself, but `tier` already is.
   findings: bytes(),
+  // sha256 of the exact sdist archive this report is about -- what a maintainer's KillSwitch.revoke()
+  // targets on ENS (see shankh/shankh/ens/). "" when the reporter didn't compute one.
+  artifactSha256: str().indexed(),
+  // whether this report's tier was forced to `critical` by the maintainer's own ENS revocation
+  // (kill signal #2, docs/plan.md Signals) rather than by the local rebuild diff alone.
+  ensRevoked: bool().indexed(),
 });
 
 /**

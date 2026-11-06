@@ -16,6 +16,8 @@ const ShankhReport = defineSchema("shankh.report", {
   malicious: bool().indexed(),
   reporter: addr().indexed(),
   findings: bytes(),
+  artifactSha256: str().indexed(),
+  ensRevoked: bool().indexed(),
 });
 
 export type Report = {
@@ -26,6 +28,8 @@ export type Report = {
   malicious: boolean;
   reporter: string;
   findings: { relativePath: string; tier: string }[];
+  artifactSha256: string;
+  ensRevoked: boolean;
 };
 
 export async function recentReports(limit = 20): Promise<Report[]> {
@@ -40,7 +44,17 @@ export async function recentReports(limit = 20): Promise<Report[]> {
   // $createdAt isn't a queryable system attribute, so this can't sort by recency server-side --
   // newest-first ordering, if wanted, has to come from the caller tracking keys over time instead.
   const page = await client
-    .select({ $key: true, package: true, version: true, tier: true, malicious: true, reporter: true, findings: true })
+    .select({
+      $key: true,
+      package: true,
+      version: true,
+      tier: true,
+      malicious: true,
+      reporter: true,
+      findings: true,
+      artifactSha256: true,
+      ensRevoked: true,
+    })
     .from(ShankhReport)
     .limit(limit)
     .fetch();
@@ -53,5 +67,8 @@ export async function recentReports(limit = 20): Promise<Report[]> {
     malicious: entity.malicious.value,
     reporter: entity.reporter.value,
     findings: JSON.parse(hexToString(entity.findings.value)) as { relativePath: string; tier: string }[],
+    // older entities (written before this schema addition) won't have these columns set
+    artifactSha256: entity.artifactSha256?.value ?? "",
+    ensRevoked: entity.ensRevoked?.value ?? false,
   }));
 }

@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { recentReports } from "@/lib/arkiv";
+import { packageEnsInfo } from "@/lib/ens";
 import { killSwitchInfo } from "@/lib/killswitch";
 
 // Blocking dynamic render, no static shell -- the whole point is every request reads live.
@@ -19,9 +20,10 @@ function Code({ children }: { children: React.ReactNode }) {
 export default async function Home() {
   await connection(); // forces per-request dynamic rendering -- without this, cacheComponents would prerender this page statically at build time and freeze whatever it saw then, which is exactly the hard-coded-values failure mode the ENS track rules out
 
-  const [reports, killSwitch] = await Promise.all([
+  const [reports, killSwitch, packageEns] = await Promise.all([
     recentReports().catch(() => null),
     killSwitchInfo().catch(() => null),
+    packageEnsInfo().catch(() => null),
   ]);
 
   return (
@@ -48,6 +50,44 @@ export default async function Home() {
         ) : (
           <p className="text-sm text-zinc-500">
             Not configured — set <Code>KILLSWITCH_ADDRESS</Code> and <Code>SEPOLIA_RPC_URL</Code>.
+          </p>
+        )}
+      </section>
+
+      <section>
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-zinc-500">ENS tree — shankh-demo.pypi.shankh.eth</h2>
+        {packageEns ? (
+          <div className="rounded-lg border border-zinc-200 p-4 text-sm dark:border-zinc-800">
+            <div>
+              resolver: <Code>{packageEns.resolver}</Code>
+            </div>
+            <div className="mt-1 truncate" title={packageEns.source ?? undefined}>
+              shankh.source: <Code>{packageEns.source ?? "(not set)"}</Code>
+            </div>
+            <div className="mt-1">
+              shankh.revoked:{" "}
+              {packageEns.revokedArtifacts.length === 0 ? (
+                <span className="text-zinc-500">none</span>
+              ) : (
+                <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-950 dark:text-red-300">
+                  {packageEns.revokedArtifacts.length} artifact(s) revoked
+                </span>
+              )}
+            </div>
+            {packageEns.revokedArtifacts.length > 0 && (
+              <ul className="mt-2 flex flex-col gap-0.5 font-mono text-xs text-zinc-600 dark:text-zinc-400">
+                {packageEns.revokedArtifacts.map((hash) => (
+                  <li key={hash} className="truncate">
+                    {hash}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500">
+            Not configured — set <Code>PACKAGE_RESOLVER_ADDRESS</Code>, <Code>PACKAGE_DNS_ENCODED_NAME</Code> and{" "}
+            <Code>SEPOLIA_RPC_URL</Code>.
           </p>
         )}
       </section>

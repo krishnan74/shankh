@@ -28,6 +28,8 @@ def write_report(result: VerifyResult) -> dict:
         "tier": result.tier.value,
         "malicious": result.is_malicious,
         "findings": [{"relativePath": f.relative_path, "tier": f.tier.value} for f in result.findings],
+        "artifactSha256": result.artifact_sha256,
+        "ensRevoked": result.ens_revoked,
     }
     proc = subprocess.run(
         ["npm", "run", "--silent", "write-report"],
