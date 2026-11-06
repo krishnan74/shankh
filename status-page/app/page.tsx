@@ -4,9 +4,10 @@ import { latestBlockInfo } from "@/lib/chain";
 import { packageEnsInfo } from "@/lib/ens";
 import { killSwitchInfo } from "@/lib/killswitch";
 import { attackProofs } from "@/lib/proofs";
-import { pypiRegistryInfo, shankhRegistryAddress } from "@/lib/registry";
+import { pypiRegistryInfo, registryPackages, shankhRegistryAddress } from "@/lib/registry";
 import { withTimeout } from "@/lib/timeout";
 import { EnsStory } from "@/components/ens-story";
+import { RegistryTable } from "@/components/registry-table";
 import { EnsTree } from "@/components/ens-tree";
 import { LedgerTable } from "@/components/ledger-table";
 import { PresenterRail } from "@/components/presenter-rail.client";
@@ -28,12 +29,13 @@ export default async function Home() {
 
   // Every live read is capped (lib/timeout.ts): one stalled endpoint must degrade its own section,
   // never hold the whole page hostage.
-  const [reports, killSwitch, packageEns, block, pypiRegistry] = await Promise.all([
+  const [reports, killSwitch, packageEns, block, pypiRegistry, registry] = await Promise.all([
     withTimeout(recentReports(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(killSwitchInfo(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(packageEnsInfo(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(latestBlockInfo(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(pypiRegistryInfo(), READ_TIMEOUT_MS).catch(() => null),
+    withTimeout(registryPackages(), READ_TIMEOUT_MS).catch(() => null),
   ]);
   // The attack simulations run as the address that deployed the tree -- read live from KillSwitch.
   const proofs = killSwitch ? await withTimeout(attackProofs(killSwitch.maintainer), READ_TIMEOUT_MS).catch(() => null) : null;
@@ -52,7 +54,7 @@ export default async function Home() {
             <Hero
               reports={reports}
               reportCount={reports?.length ?? null}
-              revokedCount={packageEns ? packageEns.revokedArtifacts.length : null}
+              revokedCount={registry ? registry.reduce((n, p) => n + p.flagged.length, 0) : null}
               emancipated={pypiRegistry ? pypiRegistry.emancipated : null}
             />
           </div>
@@ -115,6 +117,7 @@ export default async function Home() {
             lede="Someone who steals a maintainer's PyPI or GitHub login can publish bad code. They still can't change what's on ENS, because that's controlled by a separate wallet."
           />
           <EnsStory pypiRegistry={pypiRegistry} packageEns={packageEns} proofs={proofs} />
+          <RegistryTable packages={registry} />
         </Band>
 
         {/* 05 -- where it stands */}

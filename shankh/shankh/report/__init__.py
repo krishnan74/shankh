@@ -28,7 +28,9 @@ def write_report(result: VerifyResult) -> dict:
         "tier": result.tier.value,
         "malicious": result.is_malicious,
         "findings": [{"relativePath": f.relative_path, "tier": f.tier.value} for f in result.findings],
-        "artifactSha256": result.artifact_sha256,
+        # Arkiv column kept as `artifactSha256` so older entities still line up; it now carries the
+        # build fingerprint (inventory.build_fingerprint), the same value maintainers flag on ENS.
+        "artifactSha256": result.build_fingerprint,
         "ensRevoked": result.ens_revoked,
     }
     proc = subprocess.run(

@@ -24,7 +24,7 @@ from pathlib import Path
 import httpx
 
 from shankh import ens
-from shankh.inventory import installed_package
+from shankh.inventory import build_fingerprint, installed_package, is_package_file
 
 # How the real LiteLLM 1.107.0 persistence worked: a `.pth` file is auto-executed by Python's site
 # module on every interpreter startup; sitecustomize.py is auto-imported the same way. Neither has
@@ -55,8 +55,8 @@ class VerifyResult:
     version: str
     tier: RiskTier  # worst finding overall, after the ENS signal below is folded in
     findings: tuple[FileFinding, ...]
-    artifact_sha256: str = ""  # sha256 of the downloaded sdist archive -- what a maintainer's ENS revoke() targets
-    ens_revoked: bool = False  # kill signal #2 (docs/plan.md Signals): the maintainer revoked this exact artifact
+    build_fingerprint: str = ""  # 0x-hex identity of the installed build (inventory.build_fingerprint) -- what a maintainer's ENS revoke() targets
+    ens_revoked: bool = False  # kill signal #2 (docs/plan.md Signals): the maintainer revoked this exact build
 
     @property
     def is_malicious(self) -> bool:
@@ -143,32 +143,35 @@ def download_sdist(
 
 
 def verify(
-    package: str, version: str | None = None, *, index_url: str | None = None, find_links: str | None = None
+    package: str,
+    version: str | None = None,
+    *,
+    index_url: str | None = None,
+    find_links: str | None = None,
+    site_packages: list[str] | None = None,
 ) -> VerifyResult:
     """Rebuild `package`'s published source and diff it against what's actually installed on disk."""
-    installed = installed_package(package)
+    installed = installed_package(package, path=site_packages)
     target_version = version or installed.version
 
     with tempfile.TemporaryDirectory(prefix="shankh-verify-") as tmp:
         archive = download_sdist(package, target_version, Path(tmp), index_url=index_url, find_links=find_links)
         published = sdist_hashes(archive)
-        artifact_sha256 = hashlib.sha256(archive.read_bytes()).hexdigest()
 
+    # The maintainer flags the *installed build* (see build_fingerprint), not the source archive:
+    # a poisoned wheel -- the real LiteLLM 1.107.0 case -- can sit beside a clean source archive.
+    fingerprint = build_fingerprint(installed)
     try:
-        revoked = ens.revoked_artifacts(package)
+        revoked = ens.revoked_builds(package)
     except ens.EnsCheckError:
         revoked = set()  # ENS check configured but failed -- fall back to the rebuild result alone
-    ens_revoked = f"0x{artifact_sha256}" in revoked
+    ens_revoked = fingerprint in revoked
 
     findings: list[FileFinding] = []
     for installed_file in installed.files:
         rel = installed_file.relative_path
-        if ".dist-info/" in rel or ".egg-info/" in rel:
-            continue  # packaging metadata pip itself writes, never part of the published source
-        if "__pycache__" in rel or rel.endswith(".pyc"):
-            continue  # compiled locally by the interpreter, never shipped in the sdist
-        if rel.startswith("../"):
-            continue  # console-script entry points pip generates outside site-packages (e.g. ../../../bin/<name>)
+        if not is_package_file(rel):
+            continue  # pip metadata, locally compiled bytecode, generated launchers -- never in the source
         published_hash = published.get(rel)
         if published_hash is None:
             findings.append(FileFinding(relative_path=rel, tier=tier_for_untraceable(rel)))
@@ -183,6 +186,6 @@ def verify(
         version=target_version,
         tier=worst,
         findings=tuple(findings),
-        artifact_sha256=artifact_sha256,
+        build_fingerprint=fingerprint,
         ens_revoked=ens_revoked,
     )

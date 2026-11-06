@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from shankh import verify as verify_mod
+from shankh.inventory import InstalledFile, InstalledPackage, build_fingerprint
 from shankh.verify import RiskTier, tier_for_untraceable
 
 
@@ -62,29 +63,47 @@ def test_sdist_hashes_rejects_unknown_extension(tmp_path: Path) -> None:
         verify_mod.sdist_hashes(archive)
 
 
-def test_verify_forces_critical_when_ens_revokes_the_downloaded_artifact(
+def _installed(files: dict[str, bytes]) -> InstalledPackage:
+    return InstalledPackage(
+        name="evilpkg",
+        version="1.0.0",
+        location=Path("/site-packages"),
+        files=tuple(InstalledFile(path, hashlib.sha256(data).hexdigest()) for path, data in files.items()),
+    )
+
+
+def test_verify_forces_critical_when_ens_flags_the_installed_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A maintainer's ENS revocation (kill signal #2) overrides a clean rebuild diff entirely --
-    this is the case a rebuild alone could never catch: the published source and the installed
-    files agree, but the maintainer has still flagged this exact artifact as compromised."""
+    """A maintainer's ENS flag (kill signal #2) overrides a clean rebuild diff entirely -- the case
+    a rebuild alone can never catch: the published source and the installed files agree, but the
+    maintainer has still flagged this exact build as compromised."""
     content = b"print('hello')\n"
     archive = _make_sdist_tar_gz(tmp_path, "evilpkg-1.0.0", {"evilpkg/__init__.py": content})
-    artifact_sha256 = hashlib.sha256(archive.read_bytes()).hexdigest()
+    installed = _installed({"evilpkg/__init__.py": content})
+    flagged = build_fingerprint(installed)
 
     monkeypatch.setattr(verify_mod, "download_sdist", lambda *a, **kw: archive)
-    monkeypatch.setattr(verify_mod.ens, "revoked_artifacts", lambda package: {f"0x{artifact_sha256}"})
-
-    class _FakeInstalled:
-        version = "1.0.0"
-        files = ()
-
-    monkeypatch.setattr(verify_mod, "installed_package", lambda package: _FakeInstalled())
+    monkeypatch.setattr(verify_mod, "installed_package", lambda package, path=None: installed)
+    monkeypatch.setattr(verify_mod.ens, "revoked_builds", lambda package: {flagged})
 
     result = verify_mod.verify("evilpkg")
+    assert result.findings == ()  # the rebuild diff alone is clean
     assert result.tier == RiskTier.CRITICAL
     assert result.ens_revoked is True
-    assert result.artifact_sha256 == artifact_sha256
+    assert result.build_fingerprint == flagged
+
+
+def test_verify_ignores_flags_for_a_different_build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    content = b"print('hello')\n"
+    archive = _make_sdist_tar_gz(tmp_path, "evilpkg-1.0.0", {"evilpkg/__init__.py": content})
+    monkeypatch.setattr(verify_mod, "download_sdist", lambda *a, **kw: archive)
+    monkeypatch.setattr(verify_mod, "installed_package", lambda package, path=None: _installed({"evilpkg/__init__.py": content}))
+    monkeypatch.setattr(verify_mod.ens, "revoked_builds", lambda package: {"0x" + "ab" * 32})
+
+    result = verify_mod.verify("evilpkg")
+    assert result.tier == RiskTier.MATCH
+    assert result.ens_revoked is False
 
 
 @pytest.mark.network

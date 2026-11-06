@@ -6,7 +6,8 @@
  * outer resolve() call) with viem directly, since a Vercel function has no `cast` binary.
  *
  * Wired for the one real package this ENS tree covers so far (shankh-demo.pypi.shankh.eth, see
- * docs/evidence.md) via PACKAGE_RESOLVER_ADDRESS / PACKAGE_DNS_ENCODED_NAME env vars.
+ * docs/evidence.md) via the PACKAGE_RESOLVER_ADDRESS env var; `readText` works for any package's
+ * resolver (lib/registry.ts uses it to sweep every package under pypi.shankh.eth).
  */
 import { createPublicClient, decodeAbiParameters, encodeFunctionData, http, keccak256, toHex, type Address, type Hex } from "viem";
 import { sepolia } from "viem/chains";
@@ -46,17 +47,32 @@ export type PackageEnsInfo = {
   revokedArtifacts: string[];
 };
 
-async function textRecord(fqdn: string, key: string): Promise<string | null> {
-  const resolver = process.env.PACKAGE_RESOLVER_ADDRESS as Address | undefined;
-  const dnsName = process.env.PACKAGE_DNS_ENCODED_NAME as Hex | undefined;
-  const rpcUrl = process.env.SEPOLIA_RPC_URL;
-  if (!resolver || !dnsName || !rpcUrl) return null;
+/** DNS wire format for resolve(): each label prefixed by its length, terminated by a zero byte. */
+export function dnsEncode(name: string): Hex {
+  const bytes: number[] = [];
+  for (const label of name.split(".")) {
+    const encoded = new TextEncoder().encode(label);
+    bytes.push(encoded.length, ...encoded);
+  }
+  bytes.push(0);
+  return toHex(new Uint8Array(bytes));
+}
 
+/** Read one text record from any resolver, through ENSIP-10 resolve(). */
+export async function readText(resolver: Address, fqdn: string, key: string): Promise<string> {
+  const rpcUrl = process.env.SEPOLIA_RPC_URL;
+  if (!rpcUrl) throw new Error("SEPOLIA_RPC_URL is not set");
   const client = createPublicClient({ chain: sepolia, transport: http(rpcUrl) });
   const inner = encodeFunctionData({ abi: TEXT_ABI, functionName: "text", args: [namehash(fqdn), key] });
-  const raw = await client.readContract({ address: resolver, abi: RESOLVER_ABI, functionName: "resolve", args: [dnsName, inner] });
+  const raw = await client.readContract({ address: resolver, abi: RESOLVER_ABI, functionName: "resolve", args: [dnsEncode(fqdn), inner] });
   const [value] = decodeAbiParameters([{ type: "string" }], raw);
   return value;
+}
+
+async function textRecord(fqdn: string, key: string): Promise<string | null> {
+  const resolver = process.env.PACKAGE_RESOLVER_ADDRESS as Address | undefined;
+  if (!resolver || !process.env.SEPOLIA_RPC_URL) return null;
+  return readText(resolver, fqdn, key);
 }
 
 /** shankh-demo.pypi.shankh.eth's live shankh.source / shankh.revoked text records, read fresh. */

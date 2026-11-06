@@ -1,0 +1,12 @@
+[project]
+name = "shankh-demo"
+version = "1.0.0"
+description = "A harmless test package for the Shankh demo. Never published to PyPI."
+requires-python = ">=3.9"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["shankh_demo"]
