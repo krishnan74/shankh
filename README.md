@@ -2,7 +2,7 @@
 
 Credentials stolen by a malicious package quarantine and deactivate themselves — triggered by evidence a compromised publisher can't suppress.
 
-**Live:** https://status-page-plum-nine.vercel.app (placeholder content, see Limitations) · **Demo video:** not recorded yet · **Deployed at:** contracts not deployed yet
+**Live:** https://status-page-plum-nine.vercel.app · **Demo video:** not recorded yet · **Deployed at:** `KillSwitch` on Sepolia, `shankh.report` on the Arkiv testnet — see below
 
 ## The problem
 
@@ -22,8 +22,10 @@ See [`plan-2.md`](plan-2.md) for the full design (ENS tree, Arkiv entities, demo
 
 | Component | Where | Evidence |
 |---|---|---|
-| Status page | https://status-page-plum-nine.vercel.app | placeholder content, not yet wired to live ENS/Arkiv data |
-| Everything else | — | not deployed yet — see docs/plan.md's Status table |
+| Status page | https://status-page-plum-nine.vercel.app | reads real live data on every request — `KillSwitch.maintainer()` on Sepolia, real `shankh.report` entities on Arkiv testnet — see docs/evidence.md |
+| `KillSwitch` contract | Sepolia, `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C` | deploy tx in docs/evidence.md |
+| `shankh verify` | run it yourself, see Run it below | real rebuild-vs-published-source diff, auto-reports to Arkiv |
+| `shankhd` watcher, AWS kill, ENS tree | — | not built yet — see docs/plan.md's Status table |
 
 ## Run it
 
@@ -56,7 +58,7 @@ Required by the Ethereum Foundation Best CROPS App track. Lead property: **S (se
 
 ## Limitations
 
-Nothing is deployed yet. The watcher, verifier, kill sequence, ENS tree and Arkiv integration are all stubs that raise `NotImplementedError` — see [`docs/design.md`](docs/design.md) for exactly what's real versus planned, component by component.
+`shankh verify` (the rebuild-vs-published-source diff) and the Arkiv write it triggers are real and proven against a real malicious wheel. `KillSwitch` is deployed to Sepolia and the status page reads both live. The watcher daemon loop, the AWS kill sequence, the ENS tree (`shankh.eth`), and the `shankh.request` writer are all still stubs that raise `NotImplementedError` — see [`docs/design.md`](docs/design.md) for exactly what's real versus planned, component by component.
 
 ## Docs
 

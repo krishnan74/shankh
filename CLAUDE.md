@@ -73,7 +73,7 @@ scripts/evidence.sh        # dry run by default; --write to regenerate docs/evid
 | `KillSwitch` (Sepolia) | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, maintainer confirmed on-chain |
 | `shankh.report` (Arkiv testnet) | writer live — real entity `0x8110825324441ccf57ece02ced20ac72ff1de16e8eb56630e3c0b47fc3732ebf`, write tx `0x63442b3e069937b38284504655cf6d78d1c55fd10c8e4eaa5246ec6a3e87b1a1` |
 | ENS `shankh.eth` tree | not registered |
-| Status page | https://status-page-plum-nine.vercel.app (Vercel project `rdk07042004gmailcoms-projects/status-page`, connected to the GitHub repo for auto-deploy on push to `main`) |
+| Status page | https://status-page-plum-nine.vercel.app — reads live `KillSwitch` state (Sepolia) and real `shankh.report` entities (Arkiv testnet), server-side, per request. `KILLSWITCH_ADDRESS`/`SEPOLIA_RPC_URL`/`ARKIV_RPC_URL` set as Vercel prod env vars; `ARKIV_ACCESS_KEY` still needs adding manually (not secret, but blocked from shell automation — add via `vercel env add ARKIV_ACCESS_KEY production` or the dashboard) |
 
 ## Facts learned the hard way
 
@@ -97,4 +97,4 @@ plan-2.md, project-overview.md   Original unedited inputs — provenance only, s
 
 ## Status
 
-`KillSwitch` deployed to Sepolia (see Live table). `shankh verify` is a real, working rebuild verifier that now auto-reports to Arkiv on every run — the full "verify a package, alarm lands on Arkiv" loop has run end to end against a real malicious wheel and a real entity, not a stub, not a simulation. Everything else functional (watcher daemon loop, AWS kill sequence, ENS tree, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline).
+`KillSwitch` deployed to Sepolia (see Live table). `shankh verify` is a real, working rebuild verifier that now auto-reports to Arkiv on every run — the full "verify a package, alarm lands on Arkiv" loop has run end to end against a real malicious wheel and a real entity, not a stub, not a simulation. The status page now reads that same live state (`KillSwitch` on Sepolia, `shankh.report` on Arkiv) on every request — so the whole chain from CLI to public page is real data, no mocks, no build-time freeze. Everything else functional (watcher daemon loop, AWS kill sequence, ENS tree, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline).

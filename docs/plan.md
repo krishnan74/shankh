@@ -24,7 +24,7 @@
 | `KillSwitch` contract | **deployed to Sepolia** | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, deploy tx `0x9349e7b0e5d2e1880e6163fa1737914f25fdf125ecdb011dafff31babdb7aef2`, `maintainer()` confirmed on-chain to match the operator wallet |
 | ENS tree on Sepolia | planned | n/a |
 | Arkiv entities (`shankh.report`, `shankh.request`) and OSV mirror | **`shankh.report` writer proven live on the testnet**; `shankh.request` is schema-only, no writer yet; OSV mirror still a stub | real entity `0x8110825...`, tx `0x63442b3e...` — see docs/evidence.md; `arkiv/src/schema.ts`, `arkiv/src/client.ts`, `arkiv/src/report.ts` |
-| Status page (live demo link for ENS) | deployed, placeholder content | https://status-page-plum-nine.vercel.app — confirmed publicly reachable, no auth wall |
+| Status page (live demo link for ENS) | **deployed, reading real live data** | https://status-page-plum-nine.vercel.app reads `KillSwitch.maintainer()` on Sepolia and queries real `shankh.report` entities from Arkiv, server-side, on every request (`export const instant = false` + `connection()` to defeat Next 16's static prerendering — otherwise it would freeze whatever it saw at build time, which is exactly the "hard-coded values" failure the ENS track rules out) |
 | Claude Code hook | planned | n/a |
 | Local package index and harmless LiteLLM replay | planned | n/a |
 | Measurements | planned | see plan-2.md Measurements |
