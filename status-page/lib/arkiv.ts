@@ -26,7 +26,10 @@ export type Report = {
   version: string;
   tier: string;
   malicious: boolean;
+  /** The self-declared `reporter` attribute -- anyone can write any address here. Display only. */
   reporter: string;
+  /** The wallet that actually signed the entity, recorded by Arkiv itself. This is the one to trust. */
+  creator: string;
   findings: { relativePath: string; tier: string }[];
   artifactSha256: string;
   ensRevoked: boolean;
@@ -49,7 +52,7 @@ export async function recentReports(limit = 20): Promise<Report[]> {
   // So: fetch everything on the base columns, then merge the newer columns in where they exist.
   const [page, extras] = await Promise.all([
     client
-      .select({ $key: true, package: true, version: true, tier: true, malicious: true, reporter: true, findings: true })
+      .select({ $key: true, $creator: true, package: true, version: true, tier: true, malicious: true, reporter: true, findings: true })
       .from(ShankhReport)
       .limit(limit)
       .fetch(),
@@ -71,6 +74,7 @@ export async function recentReports(limit = 20): Promise<Report[]> {
       tier: entity.tier.value,
       malicious: entity.malicious.value,
       reporter: entity.reporter.value,
+      creator: entity.$creator ?? "",
       findings: JSON.parse(hexToString(entity.findings.value)) as { relativePath: string; tier: string }[],
       artifactSha256: extra?.artifactSha256.value ?? "",
       ensRevoked: extra?.ensRevoked.value ?? false,

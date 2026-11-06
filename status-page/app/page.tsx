@@ -5,6 +5,7 @@ import { packageEnsInfo } from "@/lib/ens";
 import { killSwitchInfo } from "@/lib/killswitch";
 import { attackProofs } from "@/lib/proofs";
 import { pypiRegistryInfo, registryPackages, shankhRegistryAddress } from "@/lib/registry";
+import { trustedReporters } from "@/lib/reporters";
 import { withTimeout } from "@/lib/timeout";
 import { EnsStory } from "@/components/ens-story";
 import { RegistryTable } from "@/components/registry-table";
@@ -29,13 +30,14 @@ export default async function Home() {
 
   // Every live read is capped (lib/timeout.ts): one stalled endpoint must degrade its own section,
   // never hold the whole page hostage.
-  const [reports, killSwitch, packageEns, block, pypiRegistry, registry] = await Promise.all([
+  const [reports, killSwitch, packageEns, block, pypiRegistry, registry, reporters] = await Promise.all([
     withTimeout(recentReports(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(killSwitchInfo(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(packageEnsInfo(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(latestBlockInfo(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(pypiRegistryInfo(), READ_TIMEOUT_MS).catch(() => null),
     withTimeout(registryPackages(), READ_TIMEOUT_MS).catch(() => null),
+    withTimeout(trustedReporters(), READ_TIMEOUT_MS).catch(() => null),
   ]);
   // The attack simulations run as the address that deployed the tree -- read live from KillSwitch.
   const proofs = killSwitch ? await withTimeout(attackProofs(killSwitch.maintainer), READ_TIMEOUT_MS).catch(() => null) : null;
@@ -89,7 +91,7 @@ export default async function Home() {
                   },
                 ]}
               />
-              <ReportFeed reports={reports} />
+              <ReportFeed reports={reports} reporters={reporters} />
             </div>
             <p className="max-w-3xl text-sm leading-relaxed text-text-secondary">
               <span className="font-mono text-foreground">sitecustomize.py</span> runs automatically every time Python starts — and it isn&rsquo;t in the package&rsquo;s public source. That&rsquo;s the same trick the real LiteLLM attack used.
