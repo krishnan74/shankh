@@ -6,6 +6,7 @@ import httpx
 import typer
 
 from shankh import verify as verify_mod
+from shankh.report import ReportWriteError, write_report
 
 app = typer.Typer(name="shankh", help="Verify packages against their public source; kill reachable credentials on proof of compromise.")
 
@@ -15,6 +16,7 @@ def verify(
     spec: str,
     index_url: str = typer.Option(None, "--index-url", help="Package index to fetch the published source from (defaults to PyPI)."),
     find_links: str = typer.Option(None, "--find-links", help="Local directory of published archives to use instead of any index (the demo's local replay index, never real PyPI)."),
+    report: bool = typer.Option(True, "--report/--no-report", help="Write the result to Arkiv as a shankh.report entity so other machines can skip re-verifying this package@version."),
 ) -> None:
     """Verify an installed package version against its published sdist. e.g. `shankh verify litellm==1.107.0`."""
     package, _, version = spec.partition("==")
@@ -30,6 +32,12 @@ def verify(
     typer.echo(f"{result.package}=={result.version}: {result.tier.value.upper()}")
     for finding in result.findings:
         typer.echo(f"  [{finding.tier.value}] {finding.relative_path}")
+    if report:
+        try:
+            written = write_report(result)
+            typer.echo(f"  reported to Arkiv: {written['entityKey']} (tx {written['txHash']})")
+        except ReportWriteError as exc:
+            typer.echo(f"  could not write to Arkiv (continuing): {exc}")
     if result.is_malicious:
         raise typer.Exit(code=2)
 

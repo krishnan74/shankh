@@ -7,8 +7,7 @@ Read [`docs/plan.md`](docs/plan.md) first — it opens with a status table of wh
 ## Working agreements
 
 - **Ask before every `git commit`.** Show the diff and proposed message; the user reviews first.
-- **Commit at the granularity of a change, not a step.** One commit = a small feature, a complete fix, or a docs update. Never every intermediate edit; never a week of work in one blob.
-- Keep docs changes in separate commits from code.
+- **Commit at the granularity of a change, not a step.** One commit = a small feature, a complete fix, or a docs update — including the docs that describe it, in the same commit. Never every intermediate edit; never a week of work in one blob.
 - Attribution: end commits with `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` and the `Claude-Session:` trailer, per the system reminder active in-session — don't hardcode a different policy here if that reminder changes.
 - **Never hard-wrap prose in markdown.** One paragraph or bullet = one line, however long.
 - **Keep `docs/build-log.md` and `docs/feedback/*` current as the build progresses.** Only first-hand experience, evidence per item, a concrete suggestion per item. Never padded.
@@ -30,10 +29,11 @@ vercel --version
 ```bash
 # shankh/ (Python watcher + CLI)
 cd shankh && source .venv/bin/activate
-pytest                    # 12 tests: inventory/verify units + one live check against real PyPI
+pytest                    # 14 tests: inventory/verify/report units + one live check against real PyPI
 ruff check .              # lint
-shankh verify <pkg>==<version>                    # real PyPI by default
+shankh verify <pkg>==<version>                    # real PyPI by default, auto-reports to Arkiv
 shankh verify <pkg>==<version> --find-links <dir> # against a local replay index instead
+shankh verify <pkg>==<version> --no-report        # skip the Arkiv write
 
 # contracts/ (Foundry) — lib/ is gitignored, fetch it after a fresh clone
 cd contracts
@@ -97,4 +97,4 @@ plan-2.md, project-overview.md   Original unedited inputs — provenance only, s
 
 ## Status
 
-`KillSwitch` deployed to Sepolia (see Live table). `shankh verify` is a real, working rebuild verifier — proven against a real clean PyPI package and a real planted malicious wheel, not a stub. The `shankh.report` Arkiv writer is proven live too — real entity, see Live table. The two aren't wired together yet (no CLI path writes a verify result to Arkiv automatically). Everything else functional (watcher daemon loop, AWS kill sequence, ENS tree, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline).
+`KillSwitch` deployed to Sepolia (see Live table). `shankh verify` is a real, working rebuild verifier that now auto-reports to Arkiv on every run — the full "verify a package, alarm lands on Arkiv" loop has run end to end against a real malicious wheel and a real entity, not a stub, not a simulation. Everything else functional (watcher daemon loop, AWS kill sequence, ENS tree, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline).

@@ -17,8 +17,9 @@
 | Arkiv expiry limits, query syntax | **to verify at event** | spike 3 (version is now closed, syntax/limits aren't) |
 | AWS sandbox account provisioned | **to verify at event** | spike 4 |
 | Repo scaffold (4 stacks, docs, scripts) | built | `shankh/`, `contracts/`, `status-page/`, `arkiv/`, `docs/`, `scripts/` — see docs/design.md |
-| `shankhd` watcher (inventory, signals, matching) | planned — `shankh verify` is built, the daemon loop around it isn't | `shankh/shankh/daemon.py` still `NotImplementedError` |
+| `shankhd` watcher (inventory, signals, matching) | planned — `shankh verify` is built and auto-reports to Arkiv, the daemon loop around it isn't | `shankh/shankh/daemon.py` still `NotImplementedError` |
 | Rebuild verifier (file-by-file provenance diff, risk tiers) | **built, proven against both a real clean PyPI package and a real planted malicious wheel** | `shankh/shankh/verify/`, `shankh/shankh/inventory/`; see docs/feedback or build-log 2026-11-06 for the evidence |
+| End-to-end: verify → Arkiv report | **wired and proven** — `shankh verify` writes its result to a real `shankh.report` entity automatically (Python shells out to the TS writer via `arkiv/src/write-report-cli.ts`, `--no-report` to skip) | entity `0xc669ad67...`, tx `0x39b329ad...` — see docs/evidence.md |
 | AWS kill (quarantine policy, self-deactivation, CloudTrail audit) | planned | n/a |
 | `KillSwitch` contract | **deployed to Sepolia** | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, deploy tx `0x9349e7b0e5d2e1880e6163fa1737914f25fdf125ecdb011dafff31babdb7aef2`, `maintainer()` confirmed on-chain to match the operator wallet |
 | ENS tree on Sepolia | planned | n/a |
