@@ -132,6 +132,9 @@ export function Partners({
 
   return (
     <div className="flex flex-col gap-10">
+      {/* The picture first: it names the three jobs the cards below then explain one by one. */}
+      <Architecture packageCount={packageCount} flaggedCount={flaggedCount} reportCount={reportCount} />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {partners.map((p, i) => (
           <Reveal key={p.partner} delayMs={i * 80}>
@@ -156,8 +159,6 @@ export function Partners({
           </Reveal>
         ))}
       </div>
-
-      <Architecture packageCount={packageCount} flaggedCount={flaggedCount} reportCount={reportCount} />
 
       <div id="crops" className="flex scroll-mt-24 flex-col gap-4">
         <p className="label text-[10px] text-text-secondary">Ethereum Foundation · CROPS, letter by letter</p>

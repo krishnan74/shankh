@@ -6,6 +6,7 @@
  */
 import { createPublicClient } from "@arkiv-network/sdk";
 import { rabdi } from "@arkiv-network/sdk/chains";
+import { desc } from "@arkiv-network/sdk/query";
 import { addr, bool, bytes, defineSchema, str } from "@arkiv-network/sdk/schema";
 import { http, hexToString } from "viem";
 
@@ -44,8 +45,10 @@ export async function recentReports(limit = 20): Promise<Report[]> {
     transport: http(rpcUrl),
   });
 
-  // $createdAt isn't a queryable system attribute, so this can't sort by recency server-side --
-  // newest-first ordering, if wanted, has to come from the caller tracking keys over time instead.
+  // Newest first. $createdAt can't be sorted on, but every report is written with the same 90-day
+  // lifetime, so sorting by $expiresAt descending is newest-written first -- the same ordering
+  // `shankh scan` uses (arkiv/src/report.ts). Without it the hero's "latest alarm" was just
+  // whichever entity Arkiv happened to return first.
   // Two queries, not one: selecting artifactSha256/ensRevoked makes Arkiv return only entities
   // that HAVE those attributes, which silently drops every report written before they were added
   // to the schema (verified: 3 entities with the base select, 0 when the new columns are selected).
@@ -54,11 +57,13 @@ export async function recentReports(limit = 20): Promise<Report[]> {
     client
       .select({ $key: true, $creator: true, package: true, version: true, tier: true, malicious: true, reporter: true, findings: true })
       .from(ShankhReport)
+      .orderBy(desc("$expiresAt"))
       .limit(limit)
       .fetch(),
     client
       .select({ $key: true, artifactSha256: true, ensRevoked: true })
       .from(ShankhReport)
+      .orderBy(desc("$expiresAt"))
       .limit(limit)
       .fetch()
       .catch(() => null),

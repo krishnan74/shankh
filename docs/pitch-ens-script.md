@@ -56,7 +56,7 @@ About three minutes, conversational. It pitches **Shankh as it will be in its fi
 
 *(Point at "Steps 1 and 2, for real" — the dark terminal and the list beside it.)*
 
-> "Here's the check catching a test package we built to behave like the attack. It finds `sitecustomize.py` — a file Python runs on every start, and it isn't in the public source. Same trick as LiteLLM. And the alarm lands on Arkiv — that list on the right is read live."
+> "That's the same catch you saw at the start, recorded: Shankh was watching, someone installed a test package we built to behave like the attack, and two seconds later it found `sitecustomize.py` — a file Python runs on every start, and it isn't in the public source. Same trick as LiteLLM. And the alarm lands on Arkiv — that list on the right is read live, each one signed by a reporter named on ENS."
 
 *(Press `j`.)*
 
@@ -112,7 +112,7 @@ About three minutes, conversational. It pitches **Shankh as it will be in its fi
 
 > "And there it is: compromised — caught from the maintainer's ENS flag alone, no rebuild needed. The alarm's on Arkiv for every other machine."
 
-*(Back to the browser, refresh, scroll to "Every package in the registry, checked live" — the new build is listed under `shankh-demo`.)*
+*(Back to the browser, click "Open the registry →" under the ENS cards — or "Registry" in the top bar — and point at `shankh-demo.pypi.shankh.eth`: the build you just flagged is now in its `shankh.revoked` list, read live. Then press the browser's back button to return to the story.)*
 
 *(Press `j`.)*
 

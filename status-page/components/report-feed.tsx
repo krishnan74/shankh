@@ -15,7 +15,7 @@ import { TierPill } from "./ui";
 
 const short = (v: string) => (v.length > 14 ? `${v.slice(0, 6)}…${v.slice(-4)}` : v);
 
-function signerName(creator: string, reporters: Reporter[] | null): string | null {
+export function signerName(creator: string, reporters: Reporter[] | null): string | null {
   const match = reporters?.find((r) => r.signer.toLowerCase() === creator.toLowerCase());
   return match ? match.name : null;
 }
@@ -82,7 +82,7 @@ function Feed({ reports, reporters, limit }: { reports: Report[] | null; reporte
   );
 }
 
-function TrustedReporters({ reports, reporters }: { reports: Report[] | null; reporters: Reporter[] | null }) {
+export function TrustedReporters({ reports, reporters }: { reports: Report[] | null; reporters: Reporter[] | null }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1">
@@ -108,7 +108,7 @@ function TrustedReporters({ reports, reporters }: { reports: Report[] | null; re
                 </span>
                 {signed !== null && (
                   <span className="text-[11px] text-accent">
-                    {signed} alarm{signed === 1 ? "" : "s"} signed{reports && reports.length >= 20 ? " (of the latest 20)" : ""}
+                    {signed} of the latest {reports?.length} alarm{reports?.length === 1 ? "" : "s"} signed
                   </span>
                 )}
               </li>

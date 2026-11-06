@@ -46,7 +46,10 @@ const ZERO = "0x0000000000000000000000000000000000000000";
 
 export type RegistryPackage = {
   name: string; // e.g. shankh-demo.pypi.shankh.eth
+  label: string; // e.g. shankh-demo -- the PyPI name, normalized
   resolver: Address;
+  registeredTo: Address | null; // the owner in the LabelRegistered event (who the name was registered to)
+  source: string; // the shankh.source text record -- where the maintainer says the code lives
   flagged: string[]; // build fingerprints in shankh.revoked
 };
 
@@ -63,6 +66,8 @@ export async function registryPackages(): Promise<RegistryPackage[] | null> {
 
   const client = createPublicClient({ chain: sepolia, transport: http(rpcUrl) });
   const logs = await client.getLogs({ address, event: LABEL_REGISTERED, fromBlock: REGISTRY_FROM_BLOCK, toBlock: "latest" });
+  const owners = new Map<string, Address>();
+  for (const log of logs) if (log.args.label && log.args.owner) owners.set(log.args.label, log.args.owner);
   const labels = [...new Set(logs.map((log) => log.args.label).filter((l): l is string => Boolean(l)))];
 
   const packages = await Promise.all(
@@ -70,8 +75,18 @@ export async function registryPackages(): Promise<RegistryPackage[] | null> {
       const resolver = await client.readContract({ address, abi: RESOLVER_LOOKUP_ABI, functionName: "getResolver", args: [label] });
       if (resolver === ZERO) return null; // registered once, no longer resolves
       const name = `${label}.pypi.shankh.eth`;
-      const revoked = await readText(resolver, name, "shankh.revoked");
-      return { name, resolver, flagged: revoked.split(",").map((h) => h.trim()).filter(Boolean) };
+      const [revoked, source] = await Promise.all([
+        readText(resolver, name, "shankh.revoked"),
+        readText(resolver, name, "shankh.source").catch(() => ""),
+      ]);
+      return {
+        name,
+        label,
+        resolver,
+        registeredTo: owners.get(label) ?? null,
+        source: source.trim(),
+        flagged: revoked.split(",").map((h) => h.trim()).filter(Boolean),
+      };
     }),
   );
   return packages.filter((p): p is RegistryPackage => p !== null);

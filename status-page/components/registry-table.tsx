@@ -8,9 +8,10 @@
  * flag-then-scan flow. Any other flagged value shows unlabeled -- exactly as read from the chain.
  */
 import type { RegistryPackage } from "@/lib/registry";
+import Link from "next/link";
 import { Code } from "./code.client";
 
-const KNOWN_DEMO_FLAGS: Record<string, string> = {
+export const KNOWN_DEMO_FLAGS: Record<string, string> = {
   "0x4012d64c2402ba4da166ee6319be8753789477e43bda05ab4966f8e127d6f517": "placeholder from the first setup — not a real build",
   "0x23d038ae785520270605fdbb051aae53079b52104a1e5e0e33596b505f79f36e": "rehearsal test build, flagged to test the full flow",
 };
@@ -58,5 +59,34 @@ export function RegistryTable({ packages }: { packages: RegistryPackage[] | null
         </ul>
       )}
     </div>
+  );
+}
+
+/**
+ * The landing page's stand-in for the full table: one live line and a link. The table itself is
+ * reference material a judge looks up, not part of the spoken story, so it lives on /registry.
+ */
+export function RegistryTeaser({
+  packageCount,
+  flaggedCount,
+  alarmCount,
+}: {
+  packageCount: number | null;
+  flaggedCount: number | null;
+  alarmCount: number | null;
+}) {
+  const part = (n: number | null, one: string, many: string) => (n === null ? null : `${n} ${n === 1 ? one : many}`);
+  const facts = [part(packageCount, "package", "packages"), part(flaggedCount, "flagged build", "flagged builds"), part(alarmCount, "alarm on Arkiv", "alarms on Arkiv")].filter(Boolean);
+  return (
+    <Link
+      href="/registry"
+      className="group flex flex-col gap-2 rounded-2xl border border-border bg-surface p-6 transition-colors hover:border-accent/50 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div className="flex flex-col gap-1">
+        <p className="font-medium">Every package in the registry, checked live</p>
+        <p className="text-sm text-text-secondary">{facts.length ? facts.join(" · ") : "Couldn\u2019t read the registry just now"}</p>
+      </div>
+      <span className="text-sm text-accent">Open the registry →</span>
+    </Link>
   );
 }

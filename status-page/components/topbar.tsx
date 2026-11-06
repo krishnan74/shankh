@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle.client";
 
 function ConchMark() {
@@ -8,14 +9,14 @@ function ConchMark() {
   return <img src="/logo-mark.png" width={22} height={22} alt="" aria-hidden="true" className="block" />;
 }
 
-export function TopBar({ blockNumber }: { blockNumber: bigint | null }) {
+export function TopBar({ blockNumber, current = "home" }: { blockNumber: bigint | null; current?: "home" | "registry" }) {
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
-      <div className="flex items-center gap-2">
+      <Link href="/" className="flex items-center gap-2" aria-label="Shankh — home">
         <ConchMark />
         <span className="font-display text-sm font-bold italic">Shankh</span>
-      </div>
+      </Link>
       <div className="flex items-center gap-4">
         {blockNumber !== null ? (
           <span className="label hidden text-[10px] text-text-secondary sm:inline-flex sm:items-center sm:gap-1.5">
@@ -28,6 +29,13 @@ export function TopBar({ blockNumber }: { blockNumber: bigint | null }) {
             OFFLINE · couldn&rsquo;t reach Sepolia
           </span>
         )}
+        <Link
+          href="/registry"
+          aria-current={current === "registry" ? "page" : undefined}
+          className={`label text-[10px] transition-colors hover:text-accent ${current === "registry" ? "text-accent" : "text-text-secondary"}`}
+        >
+          Registry
+        </Link>
         <a
           href="https://github.com/krishnan74/shankh"
           className="label text-[10px] text-text-secondary transition-colors hover:text-accent"

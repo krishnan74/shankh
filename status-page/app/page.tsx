@@ -1,19 +1,17 @@
+import Link from "next/link";
 import { connection } from "next/server";
 import { recentReports } from "@/lib/arkiv";
 import { latestBlockInfo } from "@/lib/chain";
 import { packageEnsInfo } from "@/lib/ens";
 import { killSwitchInfo } from "@/lib/killswitch";
 import { attackProofs } from "@/lib/proofs";
-import { pypiRegistryInfo, registryPackages, shankhRegistryAddress } from "@/lib/registry";
+import { pypiRegistryInfo, registryPackages } from "@/lib/registry";
 import { trustedReporters } from "@/lib/reporters";
 import { withTimeout } from "@/lib/timeout";
 import { EnsStory } from "@/components/ens-story";
-import { RegistryTable } from "@/components/registry-table";
-import { EnsTree } from "@/components/ens-tree";
-import { LedgerTable } from "@/components/ledger-table";
+import { RegistryTeaser } from "@/components/registry-table";
 import { PresenterRail } from "@/components/presenter-rail.client";
 import { ReportFeed } from "@/components/report-feed";
-import { Reveal } from "@/components/reveal";
 import { Partners } from "@/components/partners";
 import { Hero, Incident, SiteFooter, SolutionSteps, StatusClose, Stepper } from "@/components/sections";
 import { Terminal } from "@/components/terminal.client";
@@ -41,7 +39,6 @@ export default async function Home() {
   ]);
   // The attack simulations run as the address that deployed the tree -- read live from KillSwitch.
   const proofs = killSwitch ? await withTimeout(attackProofs(killSwitch.maintainer), READ_TIMEOUT_MS).catch(() => null) : null;
-  const shankhRegistry = shankhRegistryAddress();
 
   return (
     <>
@@ -73,22 +70,23 @@ export default async function Home() {
             id="beat-solution"
             kicker="02 · What Shankh does"
             headline="Check it. Raise the alarm. Shut the keys off."
-            lede="Three steps. The first two run today — below, Shankh catches a real malicious test package and posts the alarm."
+            lede="Three steps. The first two run today — below, Shankh is watching a machine when a poisoned test package gets installed, and catches it on its own two seconds later."
           />
           <SolutionSteps />
           <div className="flex flex-col gap-6">
             <p className="label text-[10px] text-text-secondary">Steps 1 and 2, for real</p>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
               <Terminal
-                title="shankh verify evilpkg==1.0.0 — a recorded run"
+                title="shankhd — a recorded run, 6 Nov 2026 (real log, path shortened)"
                 lines={[
-                  { prompt: true, text: "shankh verify evilpkg==1.0.0 --find-links ./replay-index" },
-                  { text: "evilpkg==1.0.0: CRITICAL", tone: "accent" },
-                  { text: "  [critical] sitecustomize.py" },
-                  {
-                    text: "  reported to Arkiv: 0xc669ad67c06311e9f479a096a08d3fb997581bcabdfe81a413c7b3d1b0534010 (tx 0x39b329ad4cefd8096292be1bf22c34d8529d9724ad92a193b065ec8c8d41e381)",
-                    tone: "muted",
-                  },
+                  { prompt: true, text: "shankhd --site-packages ./victim --trust shankh-team.reporters.shankh.eth" },
+                  { text: "23:13:38  shankhd watching ./victim: 1 packages installed; trusting shankh-team.reporters.shankh.eth", tone: "muted" },
+                  { text: "23:13:41  sweep: 3 packages on ENS, 6 recent alarms from trusted reporters", tone: "muted" },
+                  { text: "          … someone runs pip install shankh-demo — no other command typed …", tone: "muted" },
+                  { text: "23:13:43  new install: shankh-demo==1.0.0 -- rebuilding it from its public source" },
+                  { text: "23:13:45  COMPROMISED  shankh-demo==1.0.0  (rebuild) [critical] sitecustomize.py", tone: "accent" },
+                  { text: "23:13:53    posted to Arkiv: 0x574edd312ac4acb778090e3021b38400d5e63fc3b973e7bf6fe9ab1aaeb7cf10", tone: "muted" },
+                  { text: "23:13:53    kill: key shut-off not built yet -- no credentials were changed.", tone: "muted" },
                 ]}
               />
               <ReportFeed reports={reports} reporters={reporters} />
@@ -125,7 +123,11 @@ export default async function Home() {
             lede="Someone who steals a maintainer's PyPI or GitHub login can publish bad code. They still can't change what's on ENS, because that's controlled by a separate wallet."
           />
           <EnsStory pypiRegistry={pypiRegistry} packageEns={packageEns} proofs={proofs} />
-          <RegistryTable packages={registry} />
+          <RegistryTeaser
+            packageCount={registry?.length ?? null}
+            flaggedCount={registry ? registry.reduce((n, p) => n + p.flagged.length, 0) : null}
+            alarmCount={reports?.length ?? null}
+          />
         </Band>
 
         {/* 05 -- where it stands */}
@@ -146,26 +148,13 @@ export default async function Home() {
             <Detail summary="01 · How it works, step by step">
               <Stepper />
             </Detail>
-            <Detail summary="02 · The full ENS setup, with addresses">
-              <Reveal>
-                <EnsTree
-                  shankhRegistry={shankhRegistry}
-                  pypiRegistry={pypiRegistry}
-                  packageEns={packageEns}
-                  killSwitch={killSwitch}
-                  proofs={proofs}
-                />
-              </Reveal>
-            </Detail>
-            <Detail summary="03 · Full on-chain ledger">
-              <LedgerTable
-                shankhRegistry={shankhRegistry}
-                pypiRegistry={pypiRegistry}
-                packageEns={packageEns}
-                killSwitch={killSwitch}
-                reports={reports}
-              />
-            </Detail>
+            <Link
+              href="/registry"
+              className="flex items-center justify-between gap-4 border-b border-border py-5 font-medium transition-colors hover:text-accent"
+            >
+              02 · Every package, the full ENS setup and the on-chain ledger
+              <span className="shrink-0 text-text-tertiary">→ Registry</span>
+            </Link>
           </div>
         </Band>
 

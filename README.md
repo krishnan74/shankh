@@ -32,7 +32,7 @@ The landing page's section 03 has a diagram of how ENS, Arkiv and the Ethereum F
 | `shankh scan --trust` — act on trusted reporters' Arkiv alarms | runs locally, reads Sepolia + Arkiv | machine A posted entity `0xe7d2102e…7ec0`; machine B read it, re-checked it locally, COMPROMISED |
 | Reporter identity `shankh-team.reporters.shankh.eth` | Sepolia, registry `0x9b833a137cf9e24200394cb9a3af5df13b1db28e` (emancipated) | `shankh.signer` → `0xDcbe075a907960951Cd4df379BB21461097eEa91`, writable only by that wallet |
 | `shankh.report` entities | Arkiv testnet (chain 7794095) | written by `0xDcbe075a907960951Cd4df379BB21461097eEa91` |
-| Landing page | Vercel | reads ENS, the `KillSwitch`, and Arkiv live on every request — no hard-coded state |
+| Landing page and `/registry` | Vercel, https://shankh-eth.vercel.app and https://shankh-eth.vercel.app/registry | read ENS, the `KillSwitch`, and Arkiv live on every request — no hard-coded state. `/registry` lists every package under `pypi.shankh.eth` with its maintainer's bad-builds list and the Arkiv alarms about it |
 
 Every address, transaction and entity: [`docs/evidence.md`](docs/evidence.md). The two "machines" in the Arkiv demo are two throwaway Python environments on one laptop, both using the demo wallet.
 
