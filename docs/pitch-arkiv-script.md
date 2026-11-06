@@ -2,7 +2,7 @@
 
 About three minutes, conversational. Pitches **Shankh as it will be in its final state**, with one live demo of what already works: one machine catches a bad package and posts the alarm to Arkiv, and a second machine that trusts that reporter picks it up, double-checks it, and flags it. Prize target: **Build on Arkiv** (each team can win only one Arkiv prize; see docs/decisions.md ADR 0001).
 
-**Before you go on stage:** run `scripts/demo-arkiv.sh prepare`. It builds a fresh poisoned test package (inert, it does nothing) and installs it into two throwaway environments, "machine A" and "machine B". Nobody has reported that exact build yet, so the demo always starts clean. Then open a terminal at the repo root, with the landing page (https://status-page-plum-nine.vercel.app) in a second window.
+**Before you go on stage:** run `scripts/demo-arkiv.sh prepare`. It builds a fresh poisoned test package (inert, it does nothing) and installs it into two throwaway environments, "machine A" and "machine B". Nobody has reported that exact build yet, so the demo always starts clean. Then open a terminal at the repo root, with the landing page (https://shankh-eth.vercel.app) in a second window.
 
 **Running it:** `scripts/demo-arkiv.sh run` pauses before step 2 (press Enter when you're ready). Each scan takes about 10–20 seconds on a slow network, so talk over it.
 

@@ -1,6 +1,6 @@
 # ENS pitch script
 
-About three minutes, conversational. It pitches **Shankh as it will be in its final state**, while following the landing page (https://status-page-plum-nine.vercel.app) top to bottom — each beat says where to scroll and what to point at. The page itself shows what's live today, so the pitch closes with one honest line saying which parts are running now and which are next. Keep that line: judges will open the page, and it's better they hear it from you.
+About three minutes, conversational. It pitches **Shankh as it will be in its final state**, while following the landing page (https://shankh-eth.vercel.app) top to bottom — each beat says where to scroll and what to point at. The page itself shows what's live today, so the pitch closes with one honest line saying which parts are running now and which are next. Keep that line: judges will open the page, and it's better they hear it from you.
 
 **Driving the page:** press `j` to jump to the next section and `k` to go back. On a wide screen (1280px+), the small numbers on the left show where you are.
 

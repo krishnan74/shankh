@@ -27,11 +27,11 @@
 | `KillSwitch` contract | **deployed to Sepolia** | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, deploy tx `0x9349e7b0e5d2e1880e6163fa1737914f25fdf125ecdb011dafff31babdb7aef2`, `maintainer()` confirmed on-chain to match the operator wallet |
 | ENS tree on Sepolia | **live on real Sepolia** | `shankh.eth` → `pypi.shankh.eth` (emancipated, corrected bitmap, confirmed `isEmancipated()==true` and re-grant reverts) → `shankh-demo.pypi.shankh.eth` (split resolver grants, `KillSwitch` syncs `shankh.revoked`, confirmed via real `resolve()` reads) — see docs/evidence.md for every address and `scripts/ens/register-tree-sepolia.sh` for the script that built it |
 | Arkiv entities (`shankh.report`, `shankh.request`) and OSV mirror | **`shankh.report` writer proven live on the testnet**; `shankh.request` is schema-only, no writer yet; OSV mirror still a stub | real entity `0x8110825...`, tx `0x63442b3e...` — see docs/evidence.md; `arkiv/src/schema.ts`, `arkiv/src/client.ts`, `arkiv/src/report.ts` |
-| Status page (live demo link for ENS) | **deployed, reading real live data** | https://status-page-plum-nine.vercel.app reads `KillSwitch.maintainer()` on Sepolia and queries real `shankh.report` entities from Arkiv, server-side, on every request (`export const instant = false` + `connection()` to defeat Next 16's static prerendering — otherwise it would freeze whatever it saw at build time, which is exactly the "hard-coded values" failure the ENS track rules out) |
+| Status page (live demo link for ENS) | **deployed, reading real live data** | https://shankh-eth.vercel.app reads `KillSwitch.maintainer()` on Sepolia and queries real `shankh.report` entities from Arkiv, server-side, on every request (`export const instant = false` + `connection()` to defeat Next 16's static prerendering — otherwise it would freeze whatever it saw at build time, which is exactly the "hard-coded values" failure the ENS track rules out) |
 | Claude Code hook | planned | n/a |
 | Local package index and harmless LiteLLM replay | planned | n/a |
 | Measurements | planned | see plan-2.md Measurements |
-| Submission | not started | n/a |
+| Submission | **drafted, not submitted** — README rewritten for judges, form copy in `docs/submission-form.md`, 3-minute video script in `docs/demo-video-script.md`, AI-usage doc updated; still open: record the video, the team's own words in `docs/ai-usage.md` and `arkiv/reach.md`, the submitted commit hash | README cold-start check from a fresh clone: 34 tests pass, `shankh scan` works with only the pre-filled public `.env.example` |
 
 ## Thesis
 
@@ -124,7 +124,7 @@ Plan-2.md's design currently touches both Arkiv prizes (`shankh.report`/`shankh.
 
 ## Open (carried over from plan-2.md, plus new from this ingest)
 
-- ~~`vercel login`~~ — **done 2026-11-06**, status page deployed to https://status-page-plum-nine.vercel.app (placeholder content, confirmed publicly reachable).
+- ~~`vercel login`~~ — **done 2026-11-06**, status page deployed to https://shankh-eth.vercel.app (placeholder content, confirmed publicly reachable).
 - ~~Funded Sepolia deployer wallet~~ — **done 2026-11-06.** The user provided an operator wallet (`OPERATOR_PRIVATE_KEY` in `.env`, 1.76 Sepolia ETH; a Claude-generated throwaway wallet from earlier in the session was unused and is dead weight in `.env`, safe to delete). Spike 1 (ENSv2 root-role revocation) passed — see the Status table and docs/feedback/ens.md. ~~`KillSwitch` deploy~~ — **done 2026-11-06**, see Status table.
 - An AWS sandbox account/profile (`AWS_PROFILE=shankh-sandbox`, plus `shankh-audit` per plan-2.md's design) for spike 4 and all of the AWS-kill work.
 - ~~Real `ARKIV_ACCESS_KEY`/`ARKIV_WALLET_PRIVATE_KEY`~~ — **done 2026-11-06.** User got a free access key from hub.arkiv.network/access-keys and funded the (reused) Sepolia operator wallet with Arkiv testnet tokens. `shankh.report` writer proven live — see Status table. Spike 3's remaining unknowns (expiry ceiling, query syntax/performance at scale) are still open, but the SDK version, write path, and query path are all now confirmed.

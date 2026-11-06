@@ -29,7 +29,12 @@ First-hand only. Evidence per item. What worked as well as what didn't.
 
 ## 6. "Most recent" needs a workaround, and a read can stall for minutes
 **What happened:** We wanted each trusted reporter's newest reports. `$createdAt` can be selected but not used to filter or sort, so we sort by `$expiresAt` descending, which only means "newest" because every report we write gets the same lifetime. Separately, one `read-reports` call against the testnet hung with no response until we killed it after several minutes; the same query answered in 2s moments later. The SDK call has no timeout of its own, so the caller hangs too.
-**Evidence:** `arkiv/src/report.ts` (`orderBy(desc("$expiresAt"))` with the comment explaining why); `shankh/shankh/report/__init__.py` now wraps the read in a 60s timeout after the hang during the live demo run (docs/build-log.md, 2026-11-06).
+**Evidence:** `arkiv/src/report.ts` (`orderBy(desc("$expiresAt"))` with the comment explaining why); `shankh/shankh/report/__init__.py` now wraps the read in a 60s timeout after the hang during the live demo run (docs/build-log.md, 2026-11-06). Seen again during the README cold-start check the same day: 14 identical keyed reads of the same creator's reports in about 5 minutes, 12 hung past a 20s cutoff and 2 answered in under 2s — independent of anything in the environment (the bare minimum env hung too).
 **Suggestion:** Allow ordering and range filters on `$createdAt` (or a block number), and give query calls a default timeout or an `AbortSignal` option so one stalled RPC can't hang a client.
+
+## 7. Without an access key, a read doesn't fail — it hangs
+**What happened:** Checking the README's judge-runnable query from a clean shell with no `ARKIV_ACCESS_KEY`, the SDK printed its warning ("no access key, so requests go to the public endpoint, which is heavily rate limited") and then the query sat for over two minutes with no result or error until we killed it. The same query with a key returned 5 reports in about 1 second.
+**Evidence:** `arkiv/src/read-reports-cli.ts` run from `arkiv/`, 2026-11-06, with and without the key; the README now tells judges to get a free key first.
+**Suggestion:** When the public endpoint rate-limits a request, return an error (HTTP 429 or a clear SDK exception) instead of holding the connection open — the warning is good, but a hang is what a first-time user actually experiences.
 
 Still open: expiry ceiling, query performance/syntax at scale (docs/plan.md spike 3's remaining unknowns).
