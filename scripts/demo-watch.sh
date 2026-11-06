@@ -41,7 +41,7 @@ prepare() {
   step "Creating an empty victim environment"
   rm -rf "${DEMO_DIR:?}/victim"
   python3 -m venv "$DEMO_DIR/victim"
-  echo "Ready: $(site_packages) (shankh-demo not installed yet)."
+  echo "Ready: ./victim in $DEMO_DIR (shankh-demo not installed yet)."
 }
 
 # Globals, not locals: the EXIT trap runs after run() has returned, when its locals are gone.
@@ -60,6 +60,9 @@ run() {
   log="$DEMO_DIR/shankhd.log"
 
   step "1/2  Start shankhd watching the victim"
+  # Run from inside the demo folder so the watcher names the environment "./victim" on screen,
+  # not its full site-packages path.
+  cd "$DEMO_DIR"
   : "${ARKIV_WALLET_PRIVATE_KEY:?set ARKIV_WALLET_PRIVATE_KEY in .env (shankhd signs what it finds)}"
   env SEPOLIA_RPC_URL="$SEPOLIA_RPC_URL" ENS_REGISTRY_ADDRESS="$ENS_REGISTRY" PYPI_REGISTRY_ADDRESS="$PYPI_REGISTRY" \
     ARKIV_RPC_URL="$ARKIV_RPC_URL" ARKIV_CHAIN_ID="${ARKIV_CHAIN_ID:-}" ARKIV_ACCESS_KEY="${ARKIV_ACCESS_KEY:-}" \

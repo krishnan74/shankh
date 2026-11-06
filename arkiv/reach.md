@@ -4,4 +4,4 @@
 
 **Can they try it today?** Yes, on testnets. Clone the repo, and `shankh verify` rebuilds a package and writes its result to Arkiv; `shankh scan --trust shankh-team.reporters.shankh.eth` reads that reporter's recent alarms and re-checks any that name a build installed locally. Both ran live (`scripts/demo-arkiv.sh`; entity `0xe7d2102e72c192949b5dcd99ccba16743796b6cf36413aa46a60d9c558687ec0`). The landing page (https://shankh-eth.vercel.app) reads the reports live. `shankhd` runs both continuously, rebuilding every new install as it lands. What's missing for real users: the automatic key shut-off, running as a system service, and mainnet.
 
-**Will you keep building it after Mumbai?** <the team's own answer — left blank on purpose; not for Claude to fill in>
+**Will you keep building it after Mumbai?** Yes. It solves a real problem I ran into in my day job, so I'll definitely keep building it until it has real impact.

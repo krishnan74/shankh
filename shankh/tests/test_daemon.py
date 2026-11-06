@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from shankh import ens
-from shankh.daemon import Watcher
+from shankh.daemon import Watcher, describe_environment
 from shankh.inventory import InstalledFile, InstalledPackage, build_fingerprint
 from shankh.kill import KillOutcome
 from shankh.report import ReportReadError
@@ -125,3 +125,14 @@ def test_an_unreachable_chain_or_arkiv_is_logged_and_retried_never_fatal() -> No
     w.baseline()
     w.check_alarms()  # must not raise
     assert w.compromises == []
+
+
+def test_the_watched_environment_is_named_by_its_folder_not_its_site_packages_path(tmp_path, monkeypatch) -> None:
+    site = tmp_path / "victim" / "lib" / "python3.14" / "site-packages"
+    site.mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+    assert describe_environment(str(site)) == "./victim"
+    assert describe_environment(None) == "this environment"
+    other = tmp_path / "plain-dir"
+    other.mkdir()
+    assert describe_environment(str(other)) == "./plain-dir"

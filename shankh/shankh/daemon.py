@@ -156,6 +156,21 @@ class Watcher:
         log(f"  kill: {outcome.summary}")
 
 
+def describe_environment(site_packages: str | None) -> str:
+    """How to name the watched environment in the log: `<env>/lib/python3.X/site-packages` is shown
+    as the environment itself (`./victim`), relative to the current directory when it's under it --
+    the long site-packages path is noise to a reader. Anything else is shown as given."""
+    if not site_packages:
+        return "this environment"
+    path = Path(site_packages).resolve()
+    if path.name == "site-packages" and path.parent.parent.name == "lib":
+        path = path.parent.parent.parent
+    try:
+        return f"./{path.relative_to(Path.cwd().resolve())}"
+    except ValueError:
+        return str(path)
+
+
 def _dist_info_snapshot(paths: list[str]) -> frozenset[str]:
     names: set[str] = set()
     for path in paths:
@@ -206,9 +221,9 @@ def run(
         write_report=write_report if report else None,
     )
     count = watcher.baseline(verify_existing)
-    where = site_packages or "this environment"
+    where = describe_environment(site_packages)
     trusted = ", ".join(r.name for r in reporters) or "no Arkiv reporters"
-    log(f"shankhd watching {where}: {count} packages installed; trusting {trusted}")
+    log(f"shankhd watching {where}: {count} package{'' if count == 1 else 's'} installed; trusting {trusted}")
 
     if once:
         watcher.check_installs()

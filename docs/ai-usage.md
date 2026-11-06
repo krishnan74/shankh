@@ -28,7 +28,3 @@ Every on-chain transaction and Arkiv write in `docs/evidence.md` was sent by com
 - `contracts/src/KillSwitch.sol`: reviewed line by line by the team (2026-11-06). Not externally audited; testnet only.
 - Nothing else has been confirmed as reviewed line by line.
 - What *was* checked, by running it rather than reading it: every claim in `docs/evidence.md` comes from a real run, and the landing page was checked in a real browser at desktop and phone widths before each deploy.
-
-## Limitations of that process
-
-<the team's own words — left blank on purpose; not for Claude to fill in>
