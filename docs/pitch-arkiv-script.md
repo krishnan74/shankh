@@ -20,6 +20,8 @@ About three minutes, conversational. Pitches **Shankh as it will be in its final
 
 > "So each machine signs its finding with its own wallet and writes it to Arkiv as a `shankh.report`: the package, the version, the exact build, and what was wrong. It's public, it can't be quietly edited, and nobody needs our permission to read it."
 
+*(Optional, if the landing page is up: scroll to section 03's diagram, "How the three fit together", and point at the right-hand Arkiv box: "This is the part I'm about to run live.")*
+
 ## 2. Live: machine B checks, nothing yet
 
 *(Run `scripts/demo-arkiv.sh run`. Step 1 prints.)*

@@ -105,7 +105,13 @@ export default async function Home() {
             headline="Three partners, three jobs."
             lede="ENS holds the switch. Arkiv carries the evidence. And open Ethereum networks mean there's no one in the middle."
           />
-          <Partners pypiRegistry={pypiRegistry} reportCount={reports?.length ?? null} blockNumber={block?.blockNumber ?? null} />
+          <Partners
+            pypiRegistry={pypiRegistry}
+            reportCount={reports?.length ?? null}
+            blockNumber={block?.blockNumber ?? null}
+            packageCount={registry?.length ?? null}
+            flaggedCount={registry ? registry.reduce((n, p) => n + p.flagged.length, 0) : null}
+          />
         </Band>
 
         {/* 04 -- why the alarm can't be silenced: ENS, up close */}

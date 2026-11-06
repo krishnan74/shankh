@@ -6,6 +6,7 @@
  * each letter with an honest status.
  */
 import type { RegistryInfo } from "@/lib/registry";
+import { Architecture } from "./architecture";
 import { Reveal } from "./reveal";
 import { Card } from "./ui";
 
@@ -44,10 +45,14 @@ export function Partners({
   pypiRegistry,
   reportCount,
   blockNumber,
+  packageCount,
+  flaggedCount,
 }: {
   pypiRegistry: RegistryInfo | null;
   reportCount: number | null;
   blockNumber: bigint | null;
+  packageCount: number | null;
+  flaggedCount: number | null;
 }) {
   const partners = [
     {
@@ -151,6 +156,8 @@ export function Partners({
           </Reveal>
         ))}
       </div>
+
+      <Architecture packageCount={packageCount} flaggedCount={flaggedCount} reportCount={reportCount} />
 
       <div id="crops" className="flex scroll-mt-24 flex-col gap-4">
         <p className="label text-[10px] text-text-secondary">Ethereum Foundation · CROPS, letter by letter</p>

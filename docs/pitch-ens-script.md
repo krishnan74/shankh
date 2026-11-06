@@ -54,7 +54,11 @@ About three minutes, conversational. It pitches **Shankh as it will be in its fi
 >
 > **Arkiv** carries the evidence: your machine posts signed proof, so every other Shankh user running that version can re-check it and protect themselves — often before they've noticed anything. **Open Ethereum networks** mean there's no Shankh server in the middle — nothing for anyone to hack or shut down. And **ENS** holds the switch — that's the one I want to show you properly."
 
-*(Point at the ENS card's chip, *Name space locked · read just now*, then press `j`.)*
+*(Scroll down to the diagram, "How the three fit together.")*
+
+> "Here's how they fit. Shankh is the dark box in the middle, running on your machine. On the left, ENS: the maintainer flags bad builds on the package's name, and reporters publish which wallet they sign with. On the right, Arkiv: machines post signed alarms and read each other's. Everything in this frame is a direct call to a public network. The dashed parts, switching the keys off, come next."
+
+*(Point back up at the ENS card's chip, *Name space locked · read just now*, then press `j`.)*
 
 ## 4. Why the alarm can't be silenced — section 04
 
