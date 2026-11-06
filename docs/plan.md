@@ -17,8 +17,8 @@
 | Arkiv expiry limits, query syntax | **to verify at event** | spike 3 (version is now closed, syntax/limits aren't) |
 | AWS sandbox account provisioned | **to verify at event** | spike 4 |
 | Repo scaffold (4 stacks, docs, scripts) | built | `shankh/`, `contracts/`, `status-page/`, `arkiv/`, `docs/`, `scripts/` — see docs/design.md |
-| `shankhd` watcher (inventory, signals, matching) | planned (CLI stub only) | `shankh/shankh/cli.py` raises `NotImplementedError` |
-| Rebuild verifier (sandbox, file-by-file comparison, risk tiers) | planned | n/a |
+| `shankhd` watcher (inventory, signals, matching) | planned — `shankh verify` is built, the daemon loop around it isn't | `shankh/shankh/daemon.py` still `NotImplementedError` |
+| Rebuild verifier (file-by-file provenance diff, risk tiers) | **built, proven against both a real clean PyPI package and a real planted malicious wheel** | `shankh/shankh/verify/`, `shankh/shankh/inventory/`; see docs/feedback or build-log 2026-11-06 for the evidence |
 | AWS kill (quarantine policy, self-deactivation, CloudTrail audit) | planned | n/a |
 | `KillSwitch` contract | **deployed to Sepolia** | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, deploy tx `0x9349e7b0e5d2e1880e6163fa1737914f25fdf125ecdb011dafff31babdb7aef2`, `maintainer()` confirmed on-chain to match the operator wallet |
 | ENS tree on Sepolia | planned | n/a |
@@ -78,7 +78,7 @@ Each is a throwaway proof whose only job is to burn down an "to verify at event"
 2. **Anon-RPC** — one read call against Sepolia through Anon-RPC. Ask the EF booth directly if it stalls; don't burn solo time on it.
 3. **Arkiv** — create one entity on Arkiv testnet, set an expiry, query it back by the field types `shankh.report` will use. Confirms expiry limits, query syntax, and current SDK version against docs.arkiv.network.
 4. **AWS sandbox account** — a disposable AWS account/profile with a throwaway access key, confirm `UpdateAccessKey → Inactive` and attaching `AWSCompromisedKeyQuarantineV3` both work from code, and that CloudTrail `LookupEvents` returns something within minutes (it has ingestion lag — measure it, don't assume).
-5. **Sandboxed rebuild** — one package (not LiteLLM yet), `--network none` build step, file-by-file hash diff against the installed copy. Confirms the rebuild mechanic before the risk-tier logic is built on top of it.
+5. **Sandboxed rebuild** — ~~one package (not LiteLLM yet), `--network none` build step, file-by-file hash diff against the installed copy.~~ **Passed, 2026-11-06, scope adjusted:** for a pure-Python package the published sdist already *is* the source — no compile step needed, no `--network none` build sandbox required, just a hash diff against the fetched archive. Proved against a real clean PyPI package (`idna`) with zero false positives, and against a real deliberately-malicious wheel built for this test (injected `.pth` + `sitecustomize.py`, matching the actual LiteLLM 1.107.0 persistence pattern) — correctly flagged CRITICAL. A real compiled-rebuild sandbox is still the right next step for packages with a native build step (not LiteLLM's case), where the build step itself could be tampered with.
 
 ## Unknowns (named as spikes, answered by the spikes above or a dedicated script)
 

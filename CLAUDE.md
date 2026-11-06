@@ -30,8 +30,10 @@ vercel --version
 ```bash
 # shankh/ (Python watcher + CLI)
 cd shankh && source .venv/bin/activate
-pytest                    # test harness, currently one CLI smoke test
+pytest                    # 12 tests: inventory/verify units + one live check against real PyPI
 ruff check .              # lint
+shankh verify <pkg>==<version>                    # real PyPI by default
+shankh verify <pkg>==<version> --find-links <dir> # against a local replay index instead
 
 # contracts/ (Foundry) — lib/ is gitignored, fetch it after a fresh clone
 cd contracts
@@ -94,4 +96,4 @@ plan-2.md, project-overview.md   Original unedited inputs — provenance only, s
 
 ## Status
 
-Scaffolded; status page deployed (placeholder content, see Live table), everything else still a stub. `shankh` CLI/package, `contracts` (KillSwitch, 3 tests passing locally), `status-page` (live, see above), and `arkiv` (SDK installed, typecheck/test harness passing) all have working empty-project test harnesses. Everything functional (watcher, verifier, kill sequence, ENS tree, Arkiv writers) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (a funded Sepolia deployer wallet, an AWS sandbox account).
+`KillSwitch` deployed to Sepolia (see Live table). `shankh verify` is a real, working rebuild verifier — proven against a real clean PyPI package and a real planted malicious wheel, not a stub. Everything else functional (watcher daemon loop, AWS kill sequence, ENS tree, Arkiv writers) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline).
