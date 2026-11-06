@@ -60,7 +60,7 @@ About three and a half minutes, conversational. Pitches **Shankh as it will be i
 
 *(Point at the last two lines: `confirmation reported to Arkiv` and `kept the original alarm alive`.)*
 
-> "In the final version, that's also the moment its cloud keys get locked down. That part isn't built yet; what you just saw is the detection and the warning, live."
+> "And on a machine that has registered its AWS keys with Shankh, that's also the moment its stolen key gets switched off — you saw that at the start."
 
 ## 5. Why you can't fake an alarm
 
@@ -70,7 +70,7 @@ About three and a half minutes, conversational. Pitches **Shankh as it will be i
 
 ## 6. Where it stands, and the ask
 
-> "Live today: the verifier, alarms written to Arkiv, machines reading and acting on them, trust by ENS name, and a public page reading Arkiv live. A background watcher that rebuilds every new install as it lands. Not yet: the automatic key lockdown, and a second entity type, `shankh.request`, for asking the network to check a package you can't check yourself."
+> "Live today: the verifier, alarms written to Arkiv, machines reading and acting on them, trust by ENS name, and a public page reading Arkiv live. A background watcher that rebuilds every new install as it lands, and switches the stolen AWS key off. Not yet: finding keys on its own, and a second entity type, `shankh.request`, for asking the network to check a package you can't check yourself."
 
 > "Two questions for you: what's the right way to say 'most recent' on Arkiv? We sort by expiry date today because created-at can't be sorted on. And how long should alarms live? We use 90 days."
 

@@ -33,7 +33,7 @@ export function Hero({
             Stolen keys that <em className="font-black italic">switch themselves off.</em>
           </h1>
           <p className="max-w-lg text-lg leading-relaxed text-text-secondary">
-            When a software package you installed turns out to be hacked, Shankh proves it and raises an alarm the attacker can&rsquo;t silence. The goal: the cloud keys it could reach get shut off before anyone uses them.
+            When a software package you installed turns out to be hacked, Shankh proves it and raises an alarm the attacker can&rsquo;t silence. Then the AWS keys it could reach switch themselves off, before anyone can use them.
           </p>
           <div className="flex flex-wrap items-center gap-5">
             <a
@@ -125,8 +125,8 @@ export function SolutionSteps() {
     {
       n: "3",
       title: "Shut the keys off",
-      body: "Switch off the cloud keys that package could reach — switched off, not deleted, so a false alarm can be undone.",
-      live: false,
+      body: "Switch off the AWS keys registered with Shankh: quarantined, then deactivated — not deleted, so a false alarm can be undone.",
+      live: true,
     },
   ];
   return (
@@ -153,13 +153,14 @@ export function SolutionSteps() {
 export function StatusClose() {
   const live = [
     "Catches a real malicious package by rebuilding it from source",
+    "Switches the stolen AWS key off in seconds: quarantined, then deactivated",
     "Watches installs on its own and checks each one as it lands",
     "Signs the alarm onto Arkiv, and acts on trusted reporters' alarms after re-checking them",
     "Reads every maintainer's ENS kill switch, and treats a flagged build as critical",
     "ENS namespace we provably can't take back",
   ];
   const next = [
-    "Switching the AWS keys off automatically",
+    "Finding every key a package could reach on its own (today you register them)",
     "Docker images and other ecosystems beyond Python",
     "Private chain reads (Anon-RPC)",
   ];

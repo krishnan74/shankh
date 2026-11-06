@@ -124,7 +124,7 @@ About three minutes, conversational. It pitches **Shankh as it will be in its fi
 
 *(Point at the two lists.)*
 
-> "What you're seeing live today: the rebuild check, the Arkiv evidence, and the ENS switch — with the chain proving it can't be tampered with. And a watcher that catches a bad install the moment it lands. Switching the keys off automatically is what we're building next."
+> "What you're seeing live today: the rebuild check, the Arkiv evidence, and the ENS switch — with the chain proving it can't be tampered with. And a watcher that catches a bad install the moment it lands and switches the stolen AWS key off. Next is finding every key a package could reach on its own."
 
 ## 6. The ask
 

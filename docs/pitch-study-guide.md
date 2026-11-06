@@ -40,9 +40,10 @@ So: one person's rebuild catches the problem, it propagates via ENS/Arkiv, and e
 - **ENS:** real, live on Sepolia — `shankh.eth → pypi.shankh.eth` (emancipated, confirmed by trying to undo it and watching it fail) → three packages, each with its own `KillSwitch`. A maintainer's flag was caught by `shankh scan` from ENS alone. Reporters have ENS names too (`shankh-team.reporters.shankh.eth`).
 - **Arkiv:** real both ways. Alarms are written signed, read-only (an edit by the alarm's own owner was refused by the chain) and extendable by anyone. Other machines read trusted reporters' alarms, re-check them locally, and keep confirmed ones alive — shown live with two machines on separate wallets.
 - **Landing page and `/registry`:** deployed, every value read live per request — no hard-coded demo values.
-- **Not yet built:** switching the stolen AWS key off (blocked on an AWS sandbox account — the watcher already calls the hook it will plug into), the public-advisory (OSV) signal, Docker images, and running the watcher as a system service.
+- **The stolen key switches itself off:** real, for AWS keys you register with Shankh. Live against an AWS sandbox: the key was quarantined and deactivated 13 seconds after the poisoned install, and AWS then rejected it.
+- **Not yet built:** finding on its own which keys a package could reach (today you register them), keys other than AWS, the CloudTrail audit and file cleanup, the public-advisory (OSV) signal, Docker images, and running the watcher as a system service.
 
-Say this plainly if asked — every catch today ends in an alarm, not yet a switched-off key.
+Say this plainly if asked — the key shut-off works for keys you register; it doesn't discover them yet.
 
 ## 5. Why each partner track, and what each judge will probe
 

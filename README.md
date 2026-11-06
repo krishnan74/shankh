@@ -16,7 +16,7 @@ In October 2026, the LiteLLM 1.107.0 package on PyPI was compromised: for about 
 2. **Raise the alarm on Arkiv.** The finding is written to Arkiv as a `shankh.report` entity, signed by the finder's own wallet: package, version, the exact build's fingerprint, and what was wrong.
 3. **Let the maintainer flag it on ENS.** Every package gets a name under `pypi.shankh.eth`. The real maintainer flags a bad build through that package's `KillSwitch` contract, which writes it to the name's `shankh.revoked` text record. Nobody else can write that record — not someone who stole the maintainer's PyPI login, and not us: `pypi.shankh.eth` is emancipated.
 4. **Every machine watches and sweeps.** `shankhd` runs in the background: it rebuilds every new install the moment it lands, and every minute it fetches the bad-builds list of *every* package under `pypi.shankh.eth`, plus recent alarms from reporters you trust (named on ENS under `reporters.shankh.eth`), and compares them with what's installed — locally, so no one learns what you run. A trusted alarm is re-checked on your machine before it counts.
-5. **Act** *(not built yet)*. On a confirmed hit, the cloud keys the bad build could reach are quarantined and deactivated automatically.
+5. **Act.** On a confirmed hit, the AWS keys registered with Shankh are quarantined with AWS's own `AWSCompromisedKeyQuarantineV3` policy, then set Inactive — switched off, not deleted (`shankh restore-key` undoes it). Proven live: the stolen key was rejected by AWS 13 seconds after the poisoned install.
 
 The landing page's section 03 has a diagram of how ENS, Arkiv and the Ethereum Foundation's CROPS principles fit together.
 
@@ -29,6 +29,7 @@ The landing page's section 03 has a diagram of how ENS, Arkiv and the Ethereum F
 | Per-package `KillSwitch` → `shankh.revoked` | Sepolia, `0x1126b7aBe8b0Db262cBa84b6b5a377D002351c5a` (`shankh-demo`) | a maintainer flagged a build live (tx `0xef5625a0…7379`, confirmed in 7s) and `shankh scan` caught it from ENS alone |
 | `shankh scan` — registry sweep | runs locally | every package read from the registry's own `LabelRegistered` events |
 | `shankhd` — the watcher: rebuilds every new install as it lands, sweeps ENS and trusted Arkiv alarms every minute | runs locally | a poisoned package installed while it ran was caught 2s later with no command typed, finding posted to Arkiv: entity `0x574edd31…cf10` |
+| The stolen AWS key switches itself off | AWS sandbox (IAM) | install → caught → `AKIA…OQV6` quarantined and set Inactive in 13 s; the stolen key then rejected by AWS (`InvalidClientTokenId`) — docs/evidence.md |
 | `shankh scan --trust` — act on trusted reporters' Arkiv alarms | runs locally, reads Sepolia + Arkiv | machine A posted entity `0xe7d2102e…7ec0`; machine B read it, re-checked it locally, COMPROMISED |
 | Reporter identity `shankh-team.reporters.shankh.eth` | Sepolia, registry `0x9b833a137cf9e24200394cb9a3af5df13b1db28e` (emancipated) | `shankh.signer` → `0xDcbe075a907960951Cd4df379BB21461097eEa91`, writable only by that wallet |
 | `shankh.report` entities | Arkiv testnet (chain 7794095) | written by `0xDcbe075a907960951Cd4df379BB21461097eEa91` (and demo machine B, `0xD7290D56042105e64FF16BE6CACC2da6E958bC5c`). Created `readonly` + extendable by anyone: an edit by the alarm's own owner was refused live, and a second wallet extended it — alarm `0x6a1c8ffc…76f7` |
@@ -85,13 +86,13 @@ For the Ethereum Foundation's Best CROPS App track. Lead property: **C (censorsh
 - **C — live.** Nobody can delete or silence the alarm: not the hijacked publisher (it lives on ENS and Arkiv, not their accounts), not other people (only the maintainer's `KillSwitch` can write `shankh.revoked`, only the finder can sign their report), and not us (`pypi.shankh.eth` and `reporters.shankh.eth` are emancipated). Shankh runs on your machine and talks directly to public networks; switch the landing page off and `shankh scan` still works.
 - **O — live.** MIT licensed ([`LICENSE`](LICENSE)), public repo, runs from a clone with no Shankh account.
 - **P — partly.** What's installed never leaves your machine: `shankh scan` fetches the whole bad-builds list and reads Arkiv by reporter, never by package, then matches locally. Not yet: hiding the reads themselves from the RPC provider (Anon-RPC).
-- **S — partly.** Packages are rebuilt from source rather than trusted, alarms are re-checked locally before they count, and on ENS only the maintainer's switch can flag a build. Not yet: switching the stolen keys off automatically.
+- **S — live.** Packages are rebuilt from source rather than trusted, alarms are re-checked locally before they count, on ENS only the maintainer's switch can flag a build, and a stolen AWS key switches itself off in seconds. Not yet: finding keys without registering them.
 
 No analytics or third-party trackers on the landing page.
 
 ## Limitations
 
-- **The key shut-off isn't built.** Today Shankh detects and warns; it doesn't yet quarantine or deactivate AWS keys. The AWS sandbox for it hasn't been set up.
+- **You tell Shankh which AWS keys to protect.** It switches off keys listed in `SHANKH_PROTECTED_KEYS`; it doesn't yet discover on its own which credentials a package could reach. Only AWS keys — not GitHub, npm or SSH. The CloudTrail audit, deleting the rogue files and the incident report aren't built.
 - **The watcher's memory is per run.** `shankhd` rebuilds every new install and re-sweeps ENS and Arkiv every minute, but on restart it treats what's already installed as the baseline (`--verify-existing` rebuilds it all) and doesn't run as a system service yet.
 - **Python packages only.** Docker images and other ecosystems are in the design, not the code.
 - **`KillSwitch.sol` is reviewed, not audited.** The team reviewed it line by line; it has 6 Foundry tests and no external audit. Testnet only.

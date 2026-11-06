@@ -49,7 +49,7 @@ export function KeyCard({ reports }: { reports: Report[] | null }) {
           );
         })}
       </ol>
-      <p className="mt-3 text-xs text-text-secondary">&ldquo;Keys off&rdquo; is dashed because that step comes next.</p>
+      <p className="mt-3 text-xs text-text-secondary">&ldquo;Keys off&rdquo; happens on the machine that caught it, so this public alarm can&rsquo;t show it.</p>
     </div>
   );
 }

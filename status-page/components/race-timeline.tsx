@@ -26,7 +26,7 @@ const REAL = [
 const DESIGNED = [
   { h: 0.08, label: "caught by the rebuild" },
   { h: 0.16, label: "alarm raised" },
-  { h: 0.24, label: "keys switched off (planned)" },
+  { h: 0.24, label: "keys switched off" },
 ];
 
 export function RaceTimeline() {
@@ -75,7 +75,7 @@ export function RaceTimeline() {
                 <span className="block h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-accent" />
                 {i === DESIGNED.length - 1 && (
                   <span className="absolute top-3 left-0 whitespace-nowrap font-mono text-[10px] text-background/80">
-                    caught → alarm → keys off, within minutes (planned)
+                    caught → alarm → keys off: 13 seconds in our live demo
                   </span>
                 )}
               </div>

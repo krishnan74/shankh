@@ -25,7 +25,7 @@ Shankh has four jobs. Think of them as a pipeline on every developer machine, pl
                └──────────────────────────────────────────────────┘   └───────────────────────────────────┘
 ```
 
-**Built today:** NOTICE (the `shankhd` watcher, for new installs), VERIFY, DECIDE for three of the four signals, and both shared places. **Not built:** ACT — the key shut-off — which is why the box above is the final design, not today's behaviour.
+**Built today:** NOTICE (the `shankhd` watcher, for new installs), VERIFY, DECIDE for three of the four signals, both shared places, and the core of ACT — quarantining and deactivating the AWS keys registered with Shankh. **Not built:** discovering on its own which credentials a package could reach, and the rest of ACT (deleting rogue files, the CloudTrail audit, the incident report).
 
 The key insight that makes this different from a scanner: **the alarm lives in two places the attacker can't reach.** If someone steals a maintainer's GitHub or PyPI login, they can publish malicious code. They can't write to Arkiv under *your* machine's key, and they can't write `shankh.revoked` on ENS, because that's controlled by the maintainer's wallet through a contract — a credential the stolen login never touched.
 
@@ -205,7 +205,7 @@ The finished design allows an **automatic kill** on any one of these:
 | 3 | An OSV/GHSA *malware* advisory exists for this version | not built (`osv.mal` mirror is a stub) |
 | 4 | A trusted reporter's Arkiv report, **re-verified locally** | built — `shankh scan --trust`, `shankhd` |
 
-Today a signal raises the alarm and calls `shankh.kill.respond()`, which says plainly that the key shut-off isn't built yet (Part 6).
+Today a signal raises the alarm and calls `shankh.kill.respond()`, which switches off the AWS keys registered with Shankh (Part 6).
 
 Some things only cause **suspicion** — a re-check, never a kill:
 - the registry pulling a version (sometimes harmless, e.g. a whole project quarantined by mistake);
@@ -215,17 +215,20 @@ Some things only cause **suspicion** — a re-check, never a kill:
 
 ---
 
-## Part 6 — Act: the kill sequence (not built — final design)
+## Part 6 — Act: the kill sequence (core built; the rest is final design)
 
-This is the part that actually saves someone, and it's the biggest gap today. It's blocked on getting a disposable AWS sandbox account. The hook it plugs into already exists: the watcher calls `shankh.kill.respond()` on every confirmed compromise, so wiring the AWS steps in changes nothing else. Planned in `plan-2.md`:
+This is the part that actually saves someone. Code: `shankh/shankh/kill/__init__.py`; the watcher calls `shankh.kill.respond()` on every confirmed compromise.
 
-**AWS, in this order:**
-1. Attach AWS's own `AWSCompromisedKeyQuarantineV3` policy to the user that owns the key. This blocks dangerous actions immediately, even before step 2 finishes.
-2. Call `UpdateAccessKey` to set the key to **Inactive**. Not deleted — inactive, so a false alarm can be undone.
+**Built and proven live** — for every AWS access key ID registered with Shankh (`SHANKH_PROTECTED_KEYS`, or `aws_keys` in `~/.config/shankh/kill.toml`), in this order:
+1. Attach AWS's own `AWSCompromisedKeyQuarantineV3` policy to the user that owns the key (V2 if V3 isn't available). This blocks dangerous actions immediately, even before step 2 finishes.
+2. Call `UpdateAccessKey` to set the key to **Inactive**. Not deleted — inactive, so a false alarm is undone with `shankh restore-key`.
+
+Shankh acts with its own, separate AWS profile (`SHANKH_AWS_PROFILE`), never with the stolen key, and touches *only* the key IDs it was given: with none listed, it never even connects to AWS. Proven against an AWS sandbox (`scripts/demo-watch.sh`, docs/evidence.md): the stolen key was accepted by AWS, the poisoned package was installed, and 13 seconds later the key was quarantined and Inactive — AWS then rejected it (`InvalidClientTokenId`).
+
+**Still final design:**
 3. Use a *separate*, read-only profile (`shankh-audit`) to search CloudTrail for everything that key did since the package was installed.
 4. Flag any keys, users or roles that key created. Attackers often make themselves new credentials.
-
-The secret key is read from `~/.aws` or `docker inspect` only at kill time, and only held in memory.
+5. Find the keys on its own: today you register them; the design reads key *IDs* (never secrets) from `~/.aws` and `docker inspect` as part of the exposure snapshot (Part 7).
 
 **On the machine:** delete the rogue files (checking their hashes first), stop affected containers, and block the exfiltration domains from the report via the hosts file.
 
@@ -279,7 +282,7 @@ All of it is stored locally in SQLite and never leaves the machine.
 7. **Machine C** reads ENS, sees its installed artifact is revoked, and kills **without needing any rebuild.** The attacker still has the maintainer's PyPI login but can't touch any of this.
 8. **Servers off:** even with Shankh's website and any backend shut down, every machine still verifies and kills on its own. Nothing depends on Shankh's servers. That's the Ethereum Foundation "CROPS" argument.
 
-**Today, steps 2 (the watcher notices and rebuilds), 4 (the signed report), 5 (machine B picks up the alarm and re-checks it), 6 (the maintainer's revoke) and 7 (machine C catches it from ENS alone) all run live — every catch ends in an alarm, not yet a kill. The kill itself (step 3, and the kill at the end of 5 and 7) is not built.**
+**Today, all eight steps' core runs live: the watcher notices and rebuilds (2), registered AWS keys are quarantined and deactivated (3 — rogue-file deletion, domain blocking and the incident report aren't built), the signed report (4), machine B re-checks and confirms (5), the maintainer's revoke (6) and machine C catching it from ENS alone (7); any of those catches calls the same key shut-off.**
 
 ---
 
@@ -332,7 +335,8 @@ It also **re-simulates both attack attempts** against live Sepolia, without send
 | `KillSwitch` contract | deployed per package; reviewed line by line by the team, not externally audited |
 | Live landing page and `/registry` | built and deployed |
 | OSV/GHSA advisory signal | not built |
-| AWS quarantine/deactivate/audit | not built — blocked on a sandbox AWS account |
+| AWS quarantine + deactivate | built, proven live against an AWS sandbox (registered keys only) |
+| CloudTrail audit, rogue-file cleanup, incident report, key auto-discovery | not built |
 | Sandboxed compiled rebuild | not built (today's diff covers pure-Python) |
 | Install gate, Claude Code hook | not built |
 
@@ -362,7 +366,7 @@ If you can answer these without looking, you understand the system well enough t
 5. A machine only acts on trusted reporters, and even then re-runs the rebuild locally. A clean package re-checks as clean, so nothing is killed.
 6. If a maintainer's wallet is stolen, the thief can't quickly un-flag a malicious release. Flagging, by contrast, should be as fast as possible.
 7. Searching by package name would tell anyone watching what you have installed.
-8. Rebuild mismatch, ENS revocation and trusted Arkiv reports work today. The advisory signal doesn't — and none of them can switch a key off yet.
+8. Rebuild mismatch, ENS revocation and trusted Arkiv reports work today, and any of them switches off the AWS keys registered with Shankh. The advisory signal doesn't work yet.
 9. Attaching the quarantine policy. It blocks dangerous actions immediately, closing the window while the deactivation goes through.
 
 </details>

@@ -6,7 +6,7 @@ Shankh was built with Claude Code (Anthropic's coding agent) working in this rep
 
 Most of the code and most of the docs:
 
-- **The CLI (`shankh/`):** the `shankhd` watcher, the rebuild verifier, the build fingerprint, the ENS reader, the registry sweep, the trusted-reporter loop, the Arkiv bridge, and all 41 tests.
+- **The CLI (`shankh/`):** the `shankhd` watcher, the rebuild verifier, the build fingerprint, the ENS reader, the registry sweep, the trusted-reporter loop, the Arkiv bridge, the AWS key shut-off, and all 47 tests.
 - **Contracts and chain scripts:** `contracts/src/KillSwitch.sol` and its 6 Foundry tests, and every script under `scripts/` (ENS tree registration, adding packages and reporters, the demo scripts, the inert poisoned test package).
 - **Arkiv package (`arkiv/`):** schema, writer, readers, and the `arkiv/*.md` judging docs.
 - **Landing page (`status-page/`):** all components and live reads, built to design documents the team provided (below).
@@ -20,6 +20,7 @@ Every on-chain transaction and Arkiv write in `docs/evidence.md` was sent by com
 - **Design direction:** `landing-page-playbook.md` (a design system from one of the team's earlier projects) and the "The Alarm" redesign brief for the landing page.
 - **Decisions:** which prizes to target (Build on Arkiv over Mirror, CROPS for the EF), making the repo public under MIT, what to build next at each step, and approving every commit before it was made.
 - **Partner feedback, relayed from pitching in person:** the ENS team's suggestion to sweep every package under `pypi.shankh.eth`, which became `shankh scan`.
+- **The AWS sandbox:** the team created the AWS account, users and keys the key shut-off is proven against.
 - **A security review:** the team reviewed a demo command the AI proposed and caught that starting Python inside the poisoned test environment would run its startup hook. Both that and a related CLI bug it exposed were fixed, and the demo scripts follow that rule.
 - The track requirement text in `docs/plan.md`, pasted from the prize pages.
 

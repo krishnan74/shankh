@@ -171,6 +171,22 @@ def fingerprint(
     typer.echo(f"{installed.name}=={installed.version}  {build_fingerprint(installed)}")
 
 
+@app.command(name="restore-key")
+def restore_key(key_id: str) -> None:
+    """Undo a key shut-off after a false alarm: set the AWS key Active again and remove the quarantine
+    policy. Only for keys registered with Shankh (SHANKH_PROTECTED_KEYS); uses SHANKH_AWS_PROFILE."""
+    from shankh import kill as kill_mod
+
+    if key_id not in kill_mod.protected_keys():
+        typer.echo(f"{kill_mod.masked(key_id)} isn't one of the keys registered with Shankh (SHANKH_PROTECTED_KEYS) -- not touching it.")
+        raise typer.Exit(code=1)
+    try:
+        typer.echo(kill_mod.restore(key_id, kill_mod._iam_client()))
+    except Exception as exc:  # noqa: BLE001
+        typer.echo(f"could not restore {kill_mod.masked(key_id)}: {exc}")
+        raise typer.Exit(code=1)
+
+
 @app.command()
 def demo(step: bool = typer.Option(False, "--step", help="Pause between each demo beat for presenting."),
           recap: bool = typer.Option(False, "--recap", help="Replay the last demo run's state without sending transactions.")) -> None:

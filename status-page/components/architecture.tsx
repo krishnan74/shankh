@@ -168,11 +168,12 @@ export function Architecture({
                   <p className="font-mono text-[11px] text-accent">{s.cmd}</p>
                 </div>
               ))}
-              <div className="flex flex-col gap-1 rounded-xl border border-dashed border-background/30 p-3">
+              <div className="flex flex-col gap-1 rounded-xl border border-background/15 p-3">
                 <p className="text-sm font-medium">
-                  <span className="font-mono text-accent">3</span> Act <span className="label ml-1 text-[9px] opacity-60">Next</span>
+                  <span className="font-mono text-accent">3</span> Act
                 </p>
-                <p className="text-xs leading-relaxed opacity-70">Shut off the cloud keys the bad build could reach, automatically.</p>
+                <p className="text-xs leading-relaxed opacity-70">Switch off the AWS keys registered with Shankh: quarantined, then deactivated.</p>
+                <p className="font-mono text-[11px] text-accent">shankh.kill.respond()</p>
               </div>
             </div>
 

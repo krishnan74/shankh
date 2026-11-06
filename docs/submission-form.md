@@ -36,11 +36,11 @@ All three ran live: a maintainer flagged a build on Sepolia (confirmed in 7 seco
 
 `shankhd`, the background watcher, ties it together: it rebuilds every new install the moment it lands and sweeps ENS and Arkiv every minute. A poisoned package installed while it ran was caught two seconds later with no command typed.
 
-Not built yet: automatically quarantining and deactivating the stolen keys, and anything beyond Python packages. The `KillSwitch` contract was reviewed line by line by the team but not externally audited. In the demos, one wallet plays maintainer, operator and reporter.
+And the last step now runs too: the stolen AWS key switches itself off. In a live run, the key was quarantined with AWS's own policy and set Inactive 13 seconds after the poisoned install, and AWS then rejected it. Not built yet: finding on its own which keys a package could reach (today you register them), keys other than AWS, and anything beyond Python packages. The `KillSwitch` contract was reviewed line by line by the team but not externally audited. In the demos, one wallet plays maintainer, operator and reporter.
 
 ## How it's built
 
-- **CLI (`shankh/`, Python + Typer):** reads installed files and hashes from pip's `RECORD`, fetches the source archive from PyPI's JSON API, and diffs them. ENS reads shell out to Foundry's `cast` through the ENSIP-10 `resolve()` path. Arkiv reads and writes go through a small TypeScript bridge to `@arkiv-network/sdk`. `shankhd`, the watcher, lists the environment every 2 seconds and sweeps ENS and Arkiv every minute, never starting the watched environment's Python. 41 tests.
+- **CLI (`shankh/`, Python + Typer):** reads installed files and hashes from pip's `RECORD`, fetches the source archive from PyPI's JSON API, and diffs them. ENS reads shell out to Foundry's `cast` through the ENSIP-10 `resolve()` path. Arkiv reads and writes go through a small TypeScript bridge to `@arkiv-network/sdk`. `shankhd`, the watcher, lists the environment every 2 seconds and sweeps ENS and Arkiv every minute, never starting the watched environment's Python; on a confirmed compromise it switches off the registered AWS keys. 47 tests.
 - **ENSv2 on Sepolia (`scripts/ens/`):** `shankh.eth` registered via commit-reveal; `pypi.shankh.eth` and `reporters.shankh.eth` are `PermissionedRegistry` proxies with their dangerous root roles revoked (emancipated). Each package has its own `PermissionedResolver` where the maintainer can only write `shankh.source` and only its `KillSwitch` can write `shankh.revoked` (key-scoped setter roles).
 - **`KillSwitch.sol` (Foundry):** instant `revoke(build)`, 48-hour timelocked un-revoke, syncs the resolver's text record on every change. 6 Foundry tests; reviewed line by line by the team, not externally audited.
 - **Arkiv (`arkiv/`):** `shankh.report` entities with indexed package, version, tier, build fingerprint and ENS flag; reads filter by the chain-recorded creator, never by package.
@@ -61,7 +61,7 @@ The hard parts:
 
 ## What's next
 
-1. Automatic key shut-off: quarantine and deactivate the AWS keys a confirmed bad build could reach, with a CloudTrail audit trail.
+1. Find the keys on its own: read which credentials a package could reach (AWS, GitHub, npm, SSH), instead of registering them, and add the CloudTrail audit of what a stolen key did.
 2. Running `shankhd` as a system service with memory across restarts, and covering Docker images.
 3. Private chain reads through Anon-RPC, and an external audit of `KillSwitch.sol`.
 
@@ -94,7 +94,7 @@ Lead property: **censorship resistance.** Nobody can take the alarm down: not th
 
 - **O:** MIT licensed, public repo, runs from a clone with no account.
 - **P (partly):** what's installed never leaves your machine; ENS and Arkiv are read in bulk or by reporter and matched locally. Next: Anon-RPC so the RPC provider doesn't see the reads either.
-- **S (partly):** packages are rebuilt rather than trusted and alarms are re-checked locally. Next: shutting stolen keys off automatically.
+- **S:** packages are rebuilt rather than trusted, alarms are re-checked locally, and a stolen AWS key switches itself off — quarantined and deactivated 13 seconds after the poisoned install in a live run. Next: finding keys without registering them.
 - No analytics or trackers on the landing page.
 
 ## Sponsor prize fields (one block per track)
@@ -120,9 +120,9 @@ Alternative, if you'd rather point at the reading side: https://github.com/krish
 **Why we qualify:**
 > Every `shankh verify` writes a signed `shankh.report` to the Arkiv testnet, and `shankh scan --trust` reads trusted reporters' recent reports back with `createdBy` and acts on them: it re-checks the named build locally and flags it. Every alarm is created read-only and extendable by anyone, so nobody can quietly edit it and every machine that confirms it keeps it alive. That loop ran live across two machines with separate wallets, so Arkiv is the alarm machines send each other, not a write-only log.
 
-**Line of code:** https://github.com/krishnan74/shankh/blob/885fe08ba7271102acdae838155ecc21f8a1f83b/arkiv/src/report.ts#L87 (`.createdBy(creator)`: reading only reports signed by a trusted reporter)
+**Line of code:** https://github.com/krishnan74/shankh/blob/e4437aa0024c33603e4756f7c3d4515762ea67b2/arkiv/src/report.ts#L40 (`ALARM_FLAGS`: every alarm created read-only and extendable by anyone — nobody can edit it once posted; anyone who confirms it can keep it alive)
 
-Alternative (the write): https://github.com/krishnan74/shankh/blob/885fe08ba7271102acdae838155ecc21f8a1f83b/arkiv/src/report.ts#L32
+Alternative (reading only alarms signed by a trusted reporter, `.createdBy(creator)`): https://github.com/krishnan74/shankh/blob/885fe08ba7271102acdae838155ecc21f8a1f83b/arkiv/src/report.ts#L87
 
 **Suggested rating:** 7 / 10. Install, write and read worked first time, and `createdBy` was a great primitive. Points off for silent query behaviour and hangs.
 

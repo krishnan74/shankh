@@ -125,8 +125,8 @@ export function Partners({
     {
       letter: "S",
       name: "Secure",
-      body: "Proven, not trusted: packages are rebuilt from source, and on ENS only the maintainer's switch can flag a build. Switching the keys off automatically comes next.",
-      status: "partly",
+      body: "Proven, not trusted: packages are rebuilt from source, only the maintainer's switch can flag a build on ENS, and a stolen AWS key switches itself off in seconds. Next: finding keys without registering them.",
+      status: "live",
     },
   ];
 

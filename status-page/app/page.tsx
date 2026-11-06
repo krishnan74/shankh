@@ -70,23 +70,25 @@ export default async function Home() {
             id="beat-solution"
             kicker="02 · What Shankh does"
             headline="Check it. Raise the alarm. Shut the keys off."
-            lede="Three steps. The first two run today — below, Shankh is watching a machine when a poisoned test package gets installed, and catches it on its own two seconds later."
+            lede="Three steps, all running today. Below, Shankh is watching a machine when a poisoned test package gets installed: it catches it on its own seconds later, and the stolen AWS key is switched off 13 seconds after the install."
           />
           <SolutionSteps />
           <div className="flex flex-col gap-6">
-            <p className="label text-[10px] text-text-secondary">Steps 1 and 2, for real</p>
+            <p className="label text-[10px] text-text-secondary">All three steps, for real</p>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
               <Terminal
-                title="shankhd — a recorded run, 6 Nov 2026 (real log, path shortened)"
+                title="shankhd — a recorded run, 7 Nov 2026 (real log; AWS account number hidden)"
                 lines={[
                   { prompt: true, text: "shankhd --site-packages ./victim --trust shankh-team.reporters.shankh.eth" },
-                  { text: "23:13:38  shankhd watching ./victim: 1 packages installed; trusting shankh-team.reporters.shankh.eth", tone: "muted" },
-                  { text: "23:13:41  sweep: 3 packages on ENS, 6 recent alarms from trusted reporters", tone: "muted" },
+                  { text: "03:02:14  shankhd watching ./victim: 1 package installed; trusting shankh-team.reporters.shankh.eth", tone: "muted" },
+                  { text: "03:02:17  sweep: 3 packages on ENS, 10 recent alarms from trusted reporters", tone: "muted" },
+                  { text: "   attacker> aws sts get-caller-identity  ->  ACCEPTED  (the stolen key works)", tone: "muted" },
                   { text: "          … someone runs pip install shankh-demo — no other command typed …", tone: "muted" },
-                  { text: "23:13:43  new install: shankh-demo==1.0.0 -- rebuilding it from its public source" },
-                  { text: "23:13:45  COMPROMISED  shankh-demo==1.0.0  (rebuild) [critical] sitecustomize.py", tone: "accent" },
-                  { text: "23:13:53    posted to Arkiv: 0x574edd312ac4acb778090e3021b38400d5e63fc3b973e7bf6fe9ab1aaeb7cf10", tone: "muted" },
-                  { text: "23:13:53    kill: key shut-off not built yet -- no credentials were changed.", tone: "muted" },
+                  { text: "03:02:21  new install: shankh-demo==1.0.0 -- rebuilding it from its public source" },
+                  { text: "03:02:24  COMPROMISED  shankh-demo==1.0.0  (rebuild) [critical] sitecustomize.py", tone: "accent" },
+                  { text: "03:02:31    posted to Arkiv: 0x7b802aa24ddbd5dd76f4290773bcede07f36e22a8ad2b57dffd4f9dc1189b2a6", tone: "muted" },
+                  { text: "03:02:34    kill: key AKIA…OQV6 switched off (Inactive); quarantined user shankh-demo-victim (AWSCompromisedKeyQuarantineV3)", tone: "accent" },
+                  { text: "   attacker> aws sts get-caller-identity  ->  REJECTED  InvalidClientTokenId" },
                 ]}
               />
               <ReportFeed reports={reports} reporters={reporters} />
