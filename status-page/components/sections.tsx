@@ -1,10 +1,11 @@
 /**
- * The pitch-deck half of the status page, built from landing-page-playbook.md: one scrolling
- * page structured like a pitch (hero -> problem, concrete -> live demo, embedded -> how it
- * works -> everything else, collapsed -> footer), three type roles never mixed, one accent
- * spent only on what Shankh adds, a 12-col grid with a narrow kicker column, one easing curve
- * reused everywhere. The live-proof half (real KillSwitch/ENS/Arkiv reads) lives in app/page.tsx
- * since it needs the fetched data -- this file is the always-static narrative around it.
+ * The pitch-deck half of the status page, built from landing-page-playbook.md AND structured to
+ * match the 3-minute judge demo script beat-for-beat (see docs/pitch-study-guide.md and the
+ * script itself): hook -> live proof -> what an attacker can't touch -> why this matters now ->
+ * the honest close. Section kickers carry the script's own timestamps, so a presenter scrolling
+ * this page in sync with their narration always has the next line already on screen -- the page
+ * IS the deck, not a page that summarizes one. Live-data sections (needing fetched state) live in
+ * app/page.tsx; this file is the always-static narrative around and between them.
  */
 import { Card, Eyebrow, SectionHeader } from "./ui";
 import { Reveal } from "./reveal";
@@ -19,7 +20,7 @@ export function Hero() {
       <p className="max-w-xl text-lg leading-relaxed text-text-secondary">
         Proven malicious by a sandboxed rebuild, a maintainer&rsquo;s on-chain kill switch, a
         security advisory, or another victim&rsquo;s signed report — the exposed AWS key
-        quarantines itself. Scroll down: everything below the problem is live right now, not a mock.
+        quarantines itself. Scroll down: everything below the hook is live right now, not a mock.
       </p>
       <div className="flex flex-wrap items-center gap-5 pt-2">
         <a
@@ -40,16 +41,15 @@ export function Hero() {
 }
 
 /**
- * The problem, shown concretely (playbook #1): a before/after pair on the same grid, same card
- * shape, one panel inverted to mark "the solution" against "the problem" next to it (#3) --
- * never a paragraph of abstract prose.
+ * Script beat 1, 0:00-0:25 -- "The hook." Shown concretely (playbook #1): a before/after pair,
+ * same grid, one panel inverted to mark the solution against the problem next to it (#3).
  */
-export function Problem() {
+export function Hook() {
   return (
     <Reveal>
       <section className="flex flex-col gap-6 border-t border-border pt-10">
         <SectionHeader
-          kicker="The gap"
+          kicker="00:00 — The hook"
           headline="A public leak dies in seconds. A malware theft gets nothing."
           lede={
             <>
@@ -87,51 +87,112 @@ export function Problem() {
   );
 }
 
-const SIGNALS = [
+/**
+ * Script beat 4, 2:10-2:45 -- "Why this matters now." Only the two incidents actually verified in
+ * docs/plan.md's Status table -- no invented statistics, the pattern speaks for itself.
+ */
+export function WhyNow() {
+  return (
+    <Reveal>
+      <section className="flex flex-col gap-6 border-t border-border pt-10">
+        <SectionHeader
+          kicker="02:10 — Why this matters now"
+          headline="Same package, same trick, twice in one year."
+          lede="Supply-chain compromise of AI infrastructure isn't hypothetical — it's the same pattern, repeating, on the same project."
+        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:pl-[25%]">
+          <Card className="flex flex-col gap-2">
+            <p className="label text-xs text-text-tertiary">March 2026</p>
+            <p className="font-display text-lg font-bold tracking-tight">LiteLLM 1.82.7 / 1.82.8</p>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Malicious code shipped inside <code className="font-mono text-xs">proxy_server.py</code> and a{" "}
+              <code className="font-mono text-xs">.pth</code> loader (GHSA-5mg7-485q-xm76).
+            </p>
+          </Card>
+          <Card className="flex flex-col gap-2">
+            <p className="label text-xs text-text-tertiary">October 2026</p>
+            <p className="font-display text-lg font-bold tracking-tight">LiteLLM 1.107.0</p>
+            <p className="text-sm leading-relaxed text-text-secondary">
+              Same mechanism, a different release: a <code className="font-mono text-xs">.pth</code> loader and{" "}
+              <code className="font-mono text-xs">sitecustomize.py</code>, live for ~2 hours before removal.
+            </p>
+          </Card>
+        </div>
+        <p className="text-sm text-text-secondary sm:pl-[25%]">
+          A system like this doesn&rsquo;t need to catch every attack to matter — it needs to close
+          the window between compromise and a human noticing, which is measured in hours, every
+          single time this pattern repeats.
+        </p>
+      </section>
+    </Reveal>
+  );
+}
+
+/**
+ * Script beat 5, 2:45-3:00 -- "The honest close." Promoted out of progressive disclosure on
+ * purpose: this is the pitch's actual closing line, not supporting detail, and per
+ * submission.md's own advice, stating limitations plainly is the strongest credibility signal in
+ * the whole pitch, not something to bury in an accordion.
+ */
+export function HonestClose() {
+  return (
+    <Reveal>
+      <section className="flex flex-col gap-4 border-t border-border pt-10">
+        <SectionHeader kicker="02:45 — The honest close" headline="What you just saw is real." />
+        <Card tone="inverted" className="sm:ml-[25%]">
+          <p className="font-display text-xl leading-snug font-bold tracking-tight sm:text-2xl">
+            The detection, the signed alarm, the unfakeable on-chain revocation — all live, right
+            now, on Sepolia and Arkiv.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-background/70">
+            What&rsquo;s left is the last mile: actually deactivating the AWS key the moment that
+            alarm fires. That&rsquo;s the next thing we build. Everything that has to be true for
+            it to be trustworthy already is.
+          </p>
+        </Card>
+      </section>
+    </Reveal>
+  );
+}
+
+export const SIGNALS = [
   {
     step: "01",
     title: "Notice",
     body: "Watches what gets installed and which credentials each package could reach — never the credential values, just reachability.",
-    span: "sm:col-span-7",
   },
   {
     step: "02",
     title: "Verify",
     body: "Rebuilds a new release from its public source in a sandbox with no network, and diffs it file-by-file against what's actually installed.",
-    span: "sm:col-span-5",
   },
   {
     step: "03",
     title: "Kill",
     body: "On any of four signals — a rebuild mismatch, the maintainer's own ENS revocation, an advisory, or a trusted peer's report — the exposed key deactivates. Never deleted, always reversible.",
-    span: "sm:col-span-5",
   },
   {
     step: "04",
     title: "Survive",
     body: "The alarm lives on ENS and Arkiv, under keys a compromised publisher's GitHub account never holds. One person's catch saves everyone else.",
-    span: "sm:col-span-7",
   },
 ];
 
-export function Mechanism() {
+/** The step-by-step mechanism, moved into progressive disclosure (playbook #6) -- the main flow
+ * now follows the demo script's own beats instead, so this is detail, not the pitch itself. */
+export function MechanismList() {
   return (
-    <Reveal>
-      <section className="flex flex-col gap-6 border-t border-border pt-10">
-        <SectionHeader kicker="How it works" headline="Four signals, one kill." />
-        <div className="grid grid-cols-12 gap-4 sm:pl-[25%]">
-          {SIGNALS.map((s, i) => (
-            <Reveal key={s.step} delayMs={i * 80} className={`col-span-12 ${s.span}`}>
-              <Card className="flex h-full flex-col gap-2">
-                <span className="label text-xs text-text-tertiary">{s.step}</span>
-                <h3 className="font-display text-lg font-bold">{s.title}</h3>
-                <p className="text-sm leading-relaxed text-text-secondary">{s.body}</p>
-              </Card>
-            </Reveal>
-          ))}
+    <div className="flex flex-col gap-4">
+      {SIGNALS.map((s) => (
+        <div key={s.step} className="flex gap-3">
+          <span className="label mt-0.5 shrink-0 text-text-tertiary">{s.step}</span>
+          <div>
+            <p className="font-medium text-foreground">{s.title}</p>
+            <p>{s.body}</p>
+          </div>
         </div>
-      </section>
-    </Reveal>
+      ))}
+    </div>
   );
 }
 

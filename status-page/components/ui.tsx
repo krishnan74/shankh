@@ -61,6 +61,40 @@ export function SectionHeader({
   );
 }
 
+/** A real, previously-run terminal transcript -- always dark, in both themes, the universal
+ * convention for "this is a command that actually executed," not a mocked-up UI screenshot. */
+export function Terminal({ lines }: { lines: { prompt?: boolean; text: string; tone?: "default" | "accent" | "muted" }[] }) {
+  const toneClass: Record<string, string> = {
+    default: "text-zinc-100",
+    accent: "text-emerald-400",
+    muted: "text-zinc-500",
+  };
+  return (
+    <div className="overflow-x-auto rounded-xl border border-black/20 bg-[#0b0d0e] p-4 font-mono text-xs leading-relaxed sm:text-sm">
+      {lines.map((line, i) => (
+        <div key={i} className={`whitespace-pre-wrap break-all ${toneClass[line.tone ?? "default"]}`}>
+          {line.prompt && <span className="text-zinc-500">$ </span>}
+          {line.text}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** One "we tried to break our own guarantee" artifact: the exact revert a real transaction threw,
+ * not a paraphrase of it -- the proof that a claim is enforced on-chain, not just asserted. */
+export function RevertProof({ attempt, error }: { attempt: string; error: string }) {
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs dark:border-red-900/60 dark:bg-red-950/40">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-text-secondary">{attempt}</span>
+        <span className="label text-[10px] text-red-700 dark:text-red-400">reverted</span>
+      </div>
+      <code className="block break-all font-mono text-red-800 dark:text-red-300">{error}</code>
+    </div>
+  );
+}
+
 /** One accordion row for the progressive-disclosure section (landing-page-playbook.md #6). Native
  * <details>/<summary> -- accessible and animation-free by default, styled to match the page. */
 export function Detail({ summary, children }: { summary: string; children: React.ReactNode }) {

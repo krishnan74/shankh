@@ -2,8 +2,8 @@ import { connection } from "next/server";
 import { recentReports } from "@/lib/arkiv";
 import { packageEnsInfo } from "@/lib/ens";
 import { killSwitchInfo } from "@/lib/killswitch";
-import { Hero, Problem, Mechanism, SiteFooter } from "@/components/sections";
-import { Card, Code, Detail, SectionHeader, TIER_STYLE } from "@/components/ui";
+import { Hero, Hook, WhyNow, HonestClose, MechanismList, SiteFooter } from "@/components/sections";
+import { Card, Code, Detail, RevertProof, SectionHeader, Terminal, TIER_STYLE } from "@/components/ui";
 import { Reveal } from "@/components/reveal";
 
 // Blocking dynamic render, no static shell -- the whole point is every request reads live.
@@ -26,44 +26,82 @@ export default async function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-10 px-6 pb-20 sm:px-10">
       <Hero />
-      <Problem />
+      <Hook />
 
-      {/* Live demo, embedded in the narrative flow right after the problem, not linked out or
-          bolted on at the end (landing-page-playbook.md #1, #7) -- this IS the proof. */}
+      {/* Script beat 2, 0:25-1:10 -- "The real proof: detection and the tamper-proof alarm."
+          Embedded in the narrative, not linked out (playbook #1, #7). The terminal transcript is
+          a real, previously-run command against a real malicious wheel -- see docs/evidence.md
+          for the exact entity key and tx hash reproduced below. */}
       <Reveal>
         <section id="proof" className="flex flex-col gap-6 border-t border-border pt-10">
           <SectionHeader
-            kicker="Live demo — not a mock"
+            kicker="00:25 — Live proof"
             headline="Watch it prove itself."
-            lede="Read fresh from Sepolia and the Arkiv testnet on this exact request, server-side, every time this page loads."
+            lede="A real malicious wheel, rebuilt and diffed against its public source, in a sandbox. The result gets signed and published to Arkiv — not our database."
+          />
+          <div className="sm:pl-[25%]">
+            <Terminal
+              lines={[
+                { prompt: true, text: "shankh verify evilpkg==1.0.0 --find-links ./replay-index" },
+                { text: "evilpkg==1.0.0: CRITICAL", tone: "accent" },
+                { text: "  [critical] sitecustomize.py" },
+                {
+                  text: "  reported to Arkiv: 0xc669ad67c06311e9f479a096a08d3fb997581bcabdfe81a413c7b3d1b0534010 (tx 0x39b329ad4cefd8096292be1bf22c34d8529d9724ad92a193b065ec8c8d41e381)",
+                  tone: "muted",
+                },
+              ]}
+            />
+          </div>
+
+          <div className="sm:pl-[25%]">
+            <Card className="flex flex-col gap-3 text-sm">
+              <p className="label text-xs text-accent">✓ read live, Arkiv testnet</p>
+              <p className="font-medium">Recent shankh.report entities</p>
+              {reports === null ? (
+                <p className="text-text-tertiary">
+                  Could not reach Arkiv — check <Code>ARKIV_RPC_URL</Code>/<Code>ARKIV_ACCESS_KEY</Code>.
+                </p>
+              ) : reports.length === 0 ? (
+                <p className="text-text-tertiary">
+                  No reports yet. Run <Code>shankh verify</Code> to write one.
+                </p>
+              ) : (
+                <>
+                  <ul className="flex flex-col gap-2">
+                    {previewReports.map((report) => (
+                      <li key={report.key} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
+                        <span className="font-mono text-xs">
+                          {report.package}=={report.version}
+                        </span>
+                        <span className={`rounded px-2 py-0.5 text-xs font-medium uppercase ${TIER_STYLE[report.tier] ?? ""}`}>
+                          {report.tier}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {restReports.length > 0 && (
+                    <p className="text-xs text-text-tertiary">+{restReports.length} more in the full ledger below.</p>
+                  )}
+                </>
+              )}
+            </Card>
+          </div>
+        </section>
+      </Reveal>
+
+      {/* Script beat 3, 1:10-2:10 -- "What an attacker can't touch." The ENS proof: live state
+          plus the actual revert errors from the real deployment run (docs/build-log.md), not a
+          paraphrase of them -- this is the demo's central claim, made falsifiable. */}
+      <Reveal>
+        <section className="flex flex-col gap-6 border-t border-border pt-10">
+          <SectionHeader
+            kicker="01:10 — What an attacker can't touch"
+            headline="We gave up the power to undo this. Here's what happens when we try."
+            lede="pypi.shankh.eth is emancipated — every dangerous root role permanently revoked, including our own. Each package's resolver splits write access two ways, with zero overlap."
           />
 
           <div className="grid grid-cols-12 gap-4 sm:pl-[25%]">
             <Reveal className="col-span-12 sm:col-span-6">
-              <Card className="flex h-full flex-col gap-2 text-sm">
-                <p className="label text-xs text-accent">✓ read live, Sepolia</p>
-                <p className="font-medium">KillSwitch — per-package, shankh-demo</p>
-                {killSwitch ? (
-                  <>
-                    <div>
-                      contract:{" "}
-                      <a href={etherscan(killSwitch.address)} className="underline decoration-border underline-offset-2 hover:text-accent">
-                        <Code>{killSwitch.address}</Code>
-                      </a>
-                    </div>
-                    <div>
-                      maintainer: <Code>{killSwitch.maintainer}</Code>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-text-tertiary">
-                    Not configured — set <Code>KILLSWITCH_ADDRESS</Code> and <Code>SEPOLIA_RPC_URL</Code>.
-                  </p>
-                )}
-              </Card>
-            </Reveal>
-
-            <Reveal delayMs={80} className="col-span-12 sm:col-span-6">
               <Card className="flex h-full flex-col gap-2 text-sm">
                 <p className="label text-xs text-accent">✓ read live, Sepolia</p>
                 <p className="font-medium">ENS tree — shankh-demo.pypi.shankh.eth</p>
@@ -97,54 +135,61 @@ export default async function Home() {
               </Card>
             </Reveal>
 
-            <Reveal delayMs={160} className="col-span-12">
-              <Card className="flex flex-col gap-3 text-sm">
-                <p className="label text-xs text-accent">✓ read live, Arkiv testnet</p>
-                <p className="font-medium">Recent shankh.report entities</p>
-                {reports === null ? (
-                  <p className="text-text-tertiary">
-                    Could not reach Arkiv — check <Code>ARKIV_RPC_URL</Code>/<Code>ARKIV_ACCESS_KEY</Code>.
-                  </p>
-                ) : reports.length === 0 ? (
-                  <p className="text-text-tertiary">
-                    No reports yet. Run <Code>shankh verify</Code> to write one.
-                  </p>
-                ) : (
+            <Reveal delayMs={80} className="col-span-12 sm:col-span-6">
+              <Card className="flex h-full flex-col gap-2 text-sm">
+                <p className="label text-xs text-accent">✓ read live, Sepolia</p>
+                <p className="font-medium">KillSwitch — the only writer of shankh.revoked</p>
+                {killSwitch ? (
                   <>
-                    <ul className="flex flex-col gap-2">
-                      {previewReports.map((report) => (
-                        <li key={report.key} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
-                          <span className="font-mono text-xs">
-                            {report.package}=={report.version}
-                          </span>
-                          <span className={`rounded px-2 py-0.5 text-xs font-medium uppercase ${TIER_STYLE[report.tier] ?? ""}`}>
-                            {report.tier}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    {restReports.length > 0 && (
-                      <p className="text-xs text-text-tertiary">
-                        +{restReports.length} more in the full ledger below.
-                      </p>
-                    )}
+                    <div>
+                      contract:{" "}
+                      <a href={etherscan(killSwitch.address)} className="underline decoration-border underline-offset-2 hover:text-accent">
+                        <Code>{killSwitch.address}</Code>
+                      </a>
+                    </div>
+                    <div>
+                      maintainer: <Code>{killSwitch.maintainer}</Code>
+                    </div>
                   </>
+                ) : (
+                  <p className="text-text-tertiary">
+                    Not configured — set <Code>KILLSWITCH_ADDRESS</Code>.
+                  </p>
                 )}
               </Card>
+            </Reveal>
+
+            <Reveal delayMs={160} className="col-span-12">
+              <RevertProof
+                attempt="We tried to re-grant the revoked roles to ourselves, after emancipation"
+                error="EACCannotGrantRoles(0, 7237005577332262213973186563140405376786684291341514916453779499572452659456, 0xDcbe075a907960951Cd4df379BB21461097eEa91)"
+              />
+            </Reveal>
+            <Reveal delayMs={240} className="col-span-12">
+              <RevertProof
+                attempt="We tried to write shankh.revoked directly, after the resolver's broad grant was revoked"
+                error="EACUnauthorizedAccountRoles(2844021095337237841129806607665185525430769143835556004274213054207323074410, 16, 0xDcbe075a907960951Cd4df379BB21461097eEa91)"
+              />
             </Reveal>
           </div>
         </section>
       </Reveal>
 
-      <Mechanism />
+      <WhyNow />
+      <HonestClose />
 
-      {/* Progressive disclosure (landing-page-playbook.md #6): the pitch above reads in under a
-          minute; everything needed for rigor but not for the pitch -- per-track deep dives, the
-          honest limitations, and the raw activity log -- is one click away, not mandatory reading. */}
+      {/* Progressive disclosure (landing-page-playbook.md #6): the pitch above now follows the
+          demo script's own beats and reads in under three minutes; everything needed for rigor
+          but not for the pitch -- the step-by-step mechanism, per-track deep dives, the raw
+          activity log -- is one click away, not mandatory reading. */}
       <Reveal>
         <section className="flex flex-col gap-6 border-t border-border pt-10">
           <SectionHeader kicker="More detail" headline="Everything else." />
           <div className="sm:pl-[25%]">
+            <Detail summary="How it works, step by step">
+              <MechanismList />
+            </Detail>
+
             <Detail summary="Partner track alignment — ENS, Ethereum Foundation, Arkiv">
               <div className="flex flex-col gap-4">
                 <div>
@@ -172,16 +217,6 @@ export default async function Home() {
                   </p>
                 </div>
               </div>
-            </Detail>
-
-            <Detail summary="What's not built yet">
-              <p>
-                Stated plainly, not buried: the always-running watcher daemon isn&rsquo;t built, so{" "}
-                <code className="font-mono">verify</code> runs on command today, not automatically. The
-                AWS quarantine-and-deactivate sequence itself is unbuilt, blocked on provisioning a
-                sandbox account. Everything in the live demo above — the ENS tree, the rebuild diff,
-                the Arkiv report — is real on-chain state, with addresses you can check yourself.
-              </p>
             </Detail>
 
             <Detail summary="Full on-chain ledger">
