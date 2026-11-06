@@ -1,8 +1,10 @@
 # ENS pitch script
 
-About three minutes, conversational. It follows the landing page (https://status-page-plum-nine.vercel.app) top to bottom — each beat says where to scroll and what to point at, using the words on screen. Everything claimed here is live today; what isn't is said out loud.
+About three minutes, conversational. It pitches **Shankh as it will be in its final state**, while following the landing page (https://status-page-plum-nine.vercel.app) top to bottom — each beat says where to scroll and what to point at. The page itself shows what's live today, so the pitch closes with one honest line saying which parts are running now and which are next. Keep that line: judges will open the page, and it's better they hear it from you.
 
 **Driving the page:** press `j` to jump to the next section and `k` to go back. On a wide screen (1280px+), the small numbers on the left show where you are.
+
+**Before you go on stage:** run `scripts/demo-ens.sh prepare` once. It builds a fresh, unflagged poisoned test package (inert — it does nothing) into a throwaway environment, so the live flag in section 04 always works. Run it again before every demo; each build is new, so you never need to un-flag anything. Keep a terminal open at the repo root next to the browser.
 
 ---
 
@@ -18,15 +20,15 @@ About three minutes, conversational. It follows the landing page (https://status
 
 *(On screen: "October 2026: a popular AI package got hacked.")*
 
-> "In October, LiteLLM — a Python package used in a lot of AI apps — got hacked. Someone published a poisoned update. For about two hours, anyone who installed it had their cloud keys quietly copied."
+> "In October, a popular AI package called LiteLLM got hacked. For two hours, anyone who installed it had their cloud keys silently copied."
 
 *(Point at the timeline — the red dot on the top track.)*
 
-> "This is the real timeline. Published at 11:39, PyPI pulled it at 13:20 — but about four and a half hours in, one of those stolen keys was being used. Nothing stopped it."
+> "This is the real timeline. Published at 11:39, PyPI pulled it at 13:20 — but hours later, those stolen keys were being used, and nothing stopped them."
 
 *(Point at the quote with the red line beside it.)*
 
-> "And here's the strange part. If you leak an AWS key in public — say, on GitHub — Amazon shuts it off in seconds. If malware steals it off your laptop? Nothing. Nobody's watching that case."
+> "Here's the gap. If you leak an AWS key on GitHub, Amazon shuts it off in seconds. If malware steals it from your laptop, nothing happens. Nobody's watching that case."
 
 *(Press `j`.)*
 
@@ -34,13 +36,13 @@ About three minutes, conversational. It follows the landing page (https://status
 
 *(On screen: "Check it. Raise the alarm. Shut the keys off." and three numbered cards.)*
 
-> "So Shankh does three things. One — it checks: it rebuilds the package from its public source and spots files that shouldn't be there. Two — it raises the alarm: a signed alert other machines can read. Three — it shuts the keys off.
+> "**Shankh watches it.**
 >
-> See the little tags? The first two say *Live*. The third says *Next* — that's what we're building now."
+> It runs quietly on your machine. Every time a new package or Docker image lands, Shankh rebuilds it from its public source and checks every file. When something doesn't belong — like the hidden startup file LiteLLM used — it acts within seconds. The AWS keys that package could reach are switched off. The malicious files are deleted. You get a report of exactly what happened and what that key touched. And because keys are switched off, never deleted, a false alarm is one click to undo."
 
 *(Point at "Steps 1 and 2, for real" — the dark terminal and the list beside it.)*
 
-> "This is a real run against a test package we built to act like the attack. It catches `sitecustomize.py` — a file Python runs every time it starts, and it isn't in the public source. Same trick LiteLLM used. And the alarm lands on Arkiv — this list on the right is read live."
+> "Here's the check catching a test package we built to behave like the attack. It finds `sitecustomize.py` — a file Python runs on every start, and it isn't in the public source. Same trick as LiteLLM. And the alarm lands on Arkiv — that list on the right is read live."
 
 *(Press `j`.)*
 
@@ -48,7 +50,9 @@ About three minutes, conversational. It follows the landing page (https://status
 
 *(On screen: "Three partners, three jobs." and three cards side by side.)*
 
-> "Shankh leans on three partners, each doing one job. Arkiv carries the evidence between machines. Open Ethereum networks mean there's no Shankh server in the middle. And ENS — the one I want to show you properly — holds the switch."
+> "Shankh doesn't warn just you — it warns everyone, and it does that on three partners, each with one job.
+>
+> **Arkiv** carries the evidence: your machine posts signed proof, so every other Shankh user running that version can re-check it and protect themselves — often before they've noticed anything. **Open Ethereum networks** mean there's no Shankh server in the middle — nothing for anyone to hack or shut down. And **ENS** holds the switch — that's the one I want to show you properly."
 
 *(Point at the ENS card's chip, *Name space locked · read just now*, then press `j`.)*
 
@@ -56,27 +60,41 @@ About three minutes, conversational. It follows the landing page (https://status
 
 *(On screen: "The alarm lives on ENS, where the attacker — and even we — can't touch it.")*
 
-> "Now the tricky part. Attackers usually take over a package by stealing the maintainer's PyPI or GitHub login. So any alarm tied to those accounts, they can just delete.
->
-> We needed somewhere the attacker can't reach — and honestly, somewhere we can't mess with either. That's ENS."
+> "Every package has an ENS name, like `litellm.pypi.shankh.eth`. And the package's real maintainer has their own kill switch there."
 
 *(Point at "The name chain".)*
 
-> "Every package gets a name — like `shankh-demo.pypi.shankh.eth`. We set it up three ways."
+> "When the maintainer flags a release, every machine running it switches off its keys — no rebuild needed. That matters, because the people who hack a package usually steal the maintainer's PyPI password. But this switch is tied to the maintainer's *wallet*, not their login. The attacker never had it."
 
 *(Point at each card in turn.)*
 
-> "**We locked the name space.** We created `pypi.shankh.eth`, then gave up our own power to change it — permanently. That badge, *Locked · checked just now*, is read from the chain on this page load.
->
-> **Two keys, two locks.** ENSv2 lets you give someone permission to write just one record. So the maintainer can only set where the code lives, and our kill-switch contract can only set the list of bad builds. Neither can touch the other's.
->
-> **Flag fast, unflag slow.** The real maintainer flags a bad build instantly. Unflagging waits 48 hours, so someone with a stolen wallet can't quietly undo it."
+> "Three things make that trustworthy. **We locked the name space** — we gave up our own power to take over or redirect any package's name, permanently. **Two keys, two locks** — the maintainer can only set where the code lives, and their kill-switch contract can only set the list of bad builds; neither can touch the other's. **Flag fast, unflag slow** — flagging is instant; undoing it waits 48 hours, so a stolen wallet can't quietly undo it."
 
 *(Point at "We tried to break it — using our own deploy key.")*
 
-> "And we don't just claim this. Every time this page loads, it tries both attacks against the live Sepolia network, using our own deploy key. *Blocked by Sepolia* — both times. That's the chain's answer, right now."
+> "And you don't have to take our word for it. Every time this page loads, it attacks the setup with our own deploy key, on the live Sepolia network. *Blocked by Sepolia* — both times."
 
 *(Optional, if they lean in: click "Show the raw error" to show the exact error the chain returned.)*
+
+### Live: the maintainer flags a build
+
+*(Switch to the terminal. Run `scripts/demo-ens.sh run`.)*
+
+> "Now let me show you the whole thing working. This machine has a poisoned build of `shankh-demo` installed — a harmless test package with the same hidden startup file LiteLLM used."
+
+*(Step 1/3 prints: `pypi.shankh.eth: 3 packages` … `no installed build has been flagged`.)*
+
+> "Shankh checks every package registered under `pypi.shankh.eth` — all of them at once, compared on this machine, so nobody learns what I have installed. Right now, nothing's flagged."
+
+*(Press Enter. Step 2/3 sends the flag and prints how long it took, plus an Etherscan link.)*
+
+> "I'm the maintainer now. I flag this exact build from my wallet — that's a real transaction on Sepolia, and it's confirmed."
+
+*(Step 3/3 prints `COMPROMISED  shankh-demo==1.0.0  flagged on shankh-demo.pypi.shankh.eth` and the Arkiv entity.)*
+
+> "And there it is: compromised — caught from the maintainer's ENS flag alone, no rebuild needed. The alarm's on Arkiv for every other machine."
+
+*(Back to the browser, refresh, scroll to "Every package in the registry, checked live" — the new build is listed under `shankh-demo`.)*
 
 *(Press `j`.)*
 
@@ -84,11 +102,11 @@ About three minutes, conversational. It follows the landing page (https://status
 
 *(On screen, the dark panel: "One catches it. Everyone is saved.")*
 
-> "So that's the idea: one person catches it, everyone is saved. What you just saw is real."
+> "That's Shankh. **One catches it. Everyone is saved.**"
 
 *(Point at the two lists.)*
 
-> "Live today: catching the package, posting the alarm, the maintainer's kill switch on ENS, and a name space we provably can't take back. Next: switching the AWS keys off automatically, and a watcher so nobody has to type a command."
+> "What you're seeing live today: the rebuild check, the Arkiv evidence, and the ENS switch — with the chain proving it can't be tampered with. Switching the keys off automatically and the always-on watcher are what we're building next."
 
 ## 6. The ask
 
@@ -100,10 +118,15 @@ About three minutes, conversational. It follows the landing page (https://status
 
 - **The "Live right now" strip says "Arkiv unreachable"**, or the key card says *Couldn't reach Arkiv just now*: the Arkiv testnet is having a slow moment. Reload once. If it's still down, say so plainly — "the testnet's having a moment; the page tells you instead of faking it" — and carry on. ENS and Sepolia parts are separate and still live.
 - **An attack shows "Couldn't check just now"** instead of *Blocked by Sepolia*: same thing, Sepolia was slow. Reload.
+- **`demo-ens.sh run` says the build is already flagged:** you ran it without a fresh build. Run `scripts/demo-ens.sh prepare` (about a minute), then `run` again.
+- **The flag transaction is slow:** Sepolia usually confirms in under 30 seconds. Keep talking — "this is a real transaction on a public network" — it'll land.
 
 ---
 
 ## If they ask...
+
+**"Arkiv already has the alarm — why put it on ENS too?"**
+> "They answer different questions. Arkiv is the witnesses; ENS is the manufacturer's recall notice. Anyone can post a report to Arkiv, so Shankh only listens to reporters you trust, and still re-checks the package itself before acting. Only the real maintainer can write the ENS flag, so machines can act on it immediately. It also catches what a rebuild can't: if attackers poison the public source code itself, the rebuild matches and looks clean — only the maintainer knows that release is bad. And Arkiv reports expire after a while; the ENS flag is the permanent, official record you look up by the package's name."
 
 **"Couldn't you just use a normal smart contract for the list?"**
 > "For the list itself, yes. What ENS gives us is the name around it. You find any package's switch by its name, and because we locked the name space, we can't secretly point a package at a fake switch. If we ran a normal lookup contract, we'd be the weak point."

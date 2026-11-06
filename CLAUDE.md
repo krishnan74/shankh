@@ -29,11 +29,15 @@ vercel --version
 ```bash
 # shankh/ (Python watcher + CLI)
 cd shankh && source .venv/bin/activate
-pytest                    # 14 tests: inventory/verify/report units + one live check against real PyPI
+pytest                    # 28 tests: inventory/fingerprint/verify/ens/scan/report units + one live check against real PyPI
 ruff check .              # lint
 shankh verify <pkg>==<version>                    # real PyPI by default, auto-reports to Arkiv
 shankh verify <pkg>==<version> --find-links <dir> # against a local replay index instead
 shankh verify <pkg>==<version> --no-report        # skip the Arkiv write
+shankh scan                                       # check every installed package against every ENS kill switch under pypi.shankh.eth
+shankh scan --site-packages <dir>                 # ...a specific environment's packages instead
+shankh fingerprint <pkg>                          # the installed build's fingerprint -- what a maintainer flags via KillSwitch.revoke()
+# ENS reads need PYPI_REGISTRY_ADDRESS and SEPOLIA_RPC_URL exported.
 
 # contracts/ (Foundry) — lib/ is gitignored, fetch it after a fresh clone
 cd contracts
@@ -58,6 +62,9 @@ npm test                   # node's built-in test runner
 scripts/deploy.sh          # dry run by default; --write to actually deploy
 scripts/demo.sh            # dry run (--recap) by default; --write to run the real demo
 scripts/evidence.sh        # dry run by default; --write to regenerate docs/evidence.md
+scripts/demo-ens.sh prepare   # fresh, unflagged poisoned demo build in .demo/ (inert; never starts its Python)
+scripts/demo-ens.sh run       # live: scan (clean) -> maintainer flags it on Sepolia -> scan (COMPROMISED, alarm to Arkiv)
+scripts/ens/add-package-sepolia.sh <label>   # register another package under pypi.shankh.eth with its own resolver + KillSwitch
 ```
 
 ## Environment

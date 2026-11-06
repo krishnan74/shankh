@@ -53,7 +53,7 @@ So the question to ask about any installed package is: **is every file on my dis
    - otherwise it matches.
 5. **Take the worst finding** as the package's overall tier: `match < modified < untraceable < critical`.
 
-It also computes `artifact_sha256`, the hash of the downloaded source archive itself. That's the identity a maintainer can revoke on ENS (Part 4).
+It also computes the installed build's **fingerprint** (`inventory.build_fingerprint`): a sha256 over the sorted `path:hash` lines of every file the package shipped, read from `RECORD`. Every machine with the same build installed computes the same value, with no download — and a clean build of the same version gets a different one. That's the identity a maintainer flags on ENS (Part 4). It replaced an earlier choice, the hash of the source archive, which couldn't work: in the LiteLLM case the poison was in the *wheel*, beside a clean source archive, and an installed package doesn't remember which file it came from.
 
 **Proven on:** a real clean PyPI package (`idna==3.20`, no false positives) and a real malicious wheel built for the test (`evilpkg==1.0.0`, flagged critical on `sitecustomize.py`).
 
@@ -93,7 +93,7 @@ Arkiv is a shared, public data layer with its own blockchain (testnet chain "rab
 | `tier`, `malicious` | the verdict | yes |
 | `reporter` | the wallet that signed it | yes |
 | `findings` | which files, as JSON bytes | no (too long for a text field) |
-| `artifactSha256` | hash of the source archive checked | yes |
+| `artifactSha256` | the build fingerprint (column name kept for older entities) | yes |
 | `ensRevoked` | did the maintainer's ENS revoke force the verdict? | yes |
 
 4. It expires after 90 days unless renewed. ENS is the permanent record; Arkiv is the recent, detailed evidence.
@@ -177,9 +177,9 @@ Python does this by running Foundry's `cast` tool (`shankh/shankh/ens/`). The we
 
 ### How the ENS signal is used today
 
-`shankh verify` reads `shankh.revoked` for the package. If the hash of the source archive you're checking is on that list, the result is forced to **critical** even when the file diff is clean. That's kill signal #2. A rebuild alone can't catch "the maintainer says this exact build is bad," so the two signals complement each other.
+`shankh verify` reads `shankh.revoked` for the package. If the installed build's fingerprint is on that list, the result is forced to **critical** even when the file diff is clean. That's kill signal #2. `shankh scan` does the same check for every installed package at once, with no rebuild — a maintainer's flag alone is enough.
 
-**Current limit:** only `shankh-demo` is wired up, and its resolver address comes from a config value. In the finished design, a machine would find any package's resolver by asking `pypi.shankh.eth`'s registry.
+**Finding any package:** a machine asks `pypi.shankh.eth`'s registry directly — `getResolver("shankh-demo")` returns its resolver, and an unknown name returns zero. And `shankh scan` sweeps **every** package at once: package names come from the registry's own `LabelRegistered` events, so it reads every bad-builds list and compares them against everything installed, locally. No per-package lookups means whoever answers the queries never learns what you have installed. Three test packages are registered today: `shankh-demo`, `shankh-demo-clean`, `shankh-demo-tools`.
 
 ---
 
