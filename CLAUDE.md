@@ -61,7 +61,7 @@ scripts/evidence.sh        # dry run by default; --write to regenerate docs/evid
 ## Environment
 
 - Root `.env` (gitignored): see `.env.example` for every variable and where to get it.
-- `DEPLOYER_PRIVATE_KEY` and `ARKIV_WALLET_PRIVATE_KEY` are `0x`-prefixed hex, testnet-only — never reuse either outside this project.
+- `DEPLOYER_PRIVATE_KEY` and `ARKIV_WALLET_PRIVATE_KEY` are `0x`-prefixed hex, testnet-only — never reuse either outside this project. They're both currently set to the same operator wallet's key (reused deliberately — a private key isn't chain-specific, and it's testnet-only either way).
 - Never print private keys or AWS secret keys in any tool output, doc, or commit. Derive addresses with `cast wallet address --private-key $DEPLOYER_PRIVATE_KEY` rather than echoing the key itself.
 
 ## Live
@@ -71,6 +71,7 @@ scripts/evidence.sh        # dry run by default; --write to regenerate docs/evid
 | GitHub repo | https://github.com/krishnan74/shankh (public, 7 commits pushed 2026-11-06) |
 | Deployer / operator | `0xDcbe075a907960951Cd4df379BB21461097eEa91` (funded, 1.76 Sepolia ETH as of 2026-11-06) |
 | `KillSwitch` (Sepolia) | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, maintainer confirmed on-chain |
+| `shankh.report` (Arkiv testnet) | writer live — real entity `0x8110825324441ccf57ece02ced20ac72ff1de16e8eb56630e3c0b47fc3732ebf`, write tx `0x63442b3e069937b38284504655cf6d78d1c55fd10c8e4eaa5246ec6a3e87b1a1` |
 | ENS `shankh.eth` tree | not registered |
 | Status page | https://status-page-plum-nine.vercel.app (Vercel project `rdk07042004gmailcoms-projects/status-page`, connected to the GitHub repo for auto-deploy on push to `main`) |
 
@@ -96,4 +97,4 @@ plan-2.md, project-overview.md   Original unedited inputs — provenance only, s
 
 ## Status
 
-`KillSwitch` deployed to Sepolia (see Live table). `shankh verify` is a real, working rebuild verifier — proven against a real clean PyPI package and a real planted malicious wheel, not a stub. Everything else functional (watcher daemon loop, AWS kill sequence, ENS tree, Arkiv writers) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline).
+`KillSwitch` deployed to Sepolia (see Live table). `shankh verify` is a real, working rebuild verifier — proven against a real clean PyPI package and a real planted malicious wheel, not a stub. The `shankh.report` Arkiv writer is proven live too — real entity, see Live table. The two aren't wired together yet (no CLI path writes a verify result to Arkiv automatically). Everything else functional (watcher daemon loop, AWS kill sequence, ENS tree, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline).
