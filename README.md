@@ -52,7 +52,7 @@ cd ../arkiv && npm install && npm test
 Required by the Ethereum Foundation Best CROPS App track. Lead property: **S (secure)** — see [`docs/plan.md`](docs/plan.md) track checklist for why.
 
 - **C:** Shankh depends on no backend of its own to kill a credential — `shankhd` runs on the user's own machine and acts on ENS/Arkiv reads, not a Shankh-controlled server. *Not yet demonstrated end to end.*
-- **O:** <license — not yet chosen> · clone and run from the repo alone, no Shankh account needed.
+- **O:** MIT licensed ([`LICENSE`](LICENSE)), public on GitHub · clone and run from the repo alone, no Shankh account needed.
 - **P:** The status page and backend, if any, never see what's installed on a user's machine or which credentials it holds — that inventory never leaves the device. Arkiv reads are synced by time window, never by package name.
 - **S:** Credentials quarantine and deactivate automatically on proof of compromise, with no human and no live Shankh server required in the loop. *Not yet demonstrated end to end.*
 
