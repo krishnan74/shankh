@@ -1,18 +1,30 @@
 # Arkiv pitch script
 
-About three minutes, conversational. Pitches **Shankh as it will be in its final state**, with one live demo of what already works: one machine catches a bad package and posts the alarm to Arkiv, and a second machine that trusts that reporter picks it up, double-checks it, and flags it. Prize target: **Build on Arkiv** (each team can win only one Arkiv prize; see docs/decisions.md ADR 0001).
+About three and a half minutes, conversational. Pitches **Shankh as it will be in its final state**, with two live demos of what already works: the watcher catching a bad install on its own and posting the alarm to Arkiv; then one machine catching a bad package while a second machine that trusts that reporter picks the alarm up, double-checks it, and flags it. Prize target: **Build on Arkiv** (each team can win only one Arkiv prize; see docs/decisions.md ADR 0001).
 
-**Before you go on stage:** run `scripts/demo-arkiv.sh prepare`. It builds a fresh poisoned test package (inert, it does nothing) and installs it into two throwaway environments, "machine A" and "machine B". Nobody has reported that exact build yet, so the demo always starts clean. Then open a terminal at the repo root, with the landing page (https://shankh-eth.vercel.app) in a second window.
+**Before you go on stage:** run `scripts/demo-watch.sh prepare` and `scripts/demo-arkiv.sh prepare`. Each builds a fresh poisoned test package (inert, it does nothing) that nobody has reported yet, so both demos always start clean: the first into an empty throwaway environment for the watcher, the second into two throwaway environments, "machine A" and "machine B". Open a terminal at the repo root, with the landing page (https://shankh-eth.vercel.app) in a second window.
 
-**Running it:** `scripts/demo-arkiv.sh run` pauses before step 2 (press Enter when you're ready). Each scan takes about 10–20 seconds on a slow network, so talk over it.
+**Just before you start talking:** run `scripts/demo-watch.sh run`. It starts the watcher, waits for its first sweep, and pauses at "Press Enter to install the poisoned package" — that pause is your opening shot.
+
+**Running the Arkiv demo:** `scripts/demo-arkiv.sh run` pauses before step 2 (press Enter when you're ready). Each scan takes about 10–20 seconds on a slow network, so talk over it.
 
 ---
 
-## 0. The hook
+## 0. Live opener: a bad install, caught on its own (~20s)
 
-> "Last month a popular AI package, LiteLLM, was hacked. For two hours, everyone who installed it had their cloud keys copied. The first person to notice can't warn anyone fast enough. They open a GitHub issue, or post on X, and thousands of other machines keep running the bad version."
+*(Terminal paused in `demo-watch.sh run`. Press Enter.)*
 
-> "Shankh fixes the warning part. When one machine proves a package is bad, every other machine running it finds out in seconds, and acts. Arkiv is where that warning lives."
+> "Shankh is watching this machine. Watch what happens when someone installs a package — I'm not going to type anything else."
+
+*(Within a couple of seconds: `new install`, then `COMPROMISED shankh-demo==1.0.0 (rebuild) [critical] sitecustomize.py`, then `posted to Arkiv: 0x…`. Point at that last line.)*
+
+> "Two seconds. It rebuilt the package from its public source, found a file that's in nobody's code, and that last line is the alarm — already on Arkiv, signed by this machine, for everyone else running it."
+
+## 0b. The hook
+
+> "That's the attack that hit LiteLLM last month: for two hours, everyone who installed it had their cloud keys copied. The first person to notice can't warn anyone fast enough. They open a GitHub issue, or post on X, and thousands of other machines keep running the bad version."
+
+> "Shankh fixes the warning part. When one machine proves a package is bad, every other machine running it finds out in seconds, and acts. Arkiv is where that warning lives. Let me show you the other side: a machine that receives the alarm."
 
 ## 1. Why the alarm needs Arkiv
 
@@ -58,6 +70,7 @@ About three minutes, conversational. Pitches **Shankh as it will be in its final
 
 ## If something's off on stage
 
+- **The watcher doesn't catch the install within ~10 seconds:** say "let me show you the recorded run" and open docs/evidence.md (entity `0x574edd31…`), then carry on from 0b.
 - **A scan hangs:** the Arkiv read gives up after 60 seconds with "could not read Arkiv". Say "the testnet is slow, here's the run from earlier" and show docs/evidence.md (entity `0xe7d2102e…`).
 - **Step 1 already shows an alarm about this build:** `prepare` wasn't re-run. Run `scripts/demo-arkiv.sh prepare` again; every build is new.
 

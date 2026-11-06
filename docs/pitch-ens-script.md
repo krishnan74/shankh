@@ -6,7 +6,21 @@ About three minutes, conversational. It pitches **Shankh as it will be in its fi
 
 **Before you go on stage:** run `scripts/demo-ens.sh prepare` once. It builds a fresh, unflagged poisoned test package (inert — it does nothing) into a throwaway environment, so the live flag in section 04 always works. Run it again before every demo; each build is new, so you never need to un-flag anything. Keep a terminal open at the repo root next to the browser.
 
+**The opener needs one more:** run `scripts/demo-watch.sh prepare` too, and just before you start talking run `scripts/demo-watch.sh run` — it starts the watcher, waits for its first sweep, and pauses at "Press Enter to install the poisoned package". That pause is your first shot.
+
 ---
+
+## Opener — live, in the terminal (~20s)
+
+*(Terminal paused in `demo-watch.sh run`. Press Enter.)*
+
+> "Before the slides — watch this. Shankh is running on this machine. Someone installs a package, and I'm not touching anything else."
+
+*(Within a couple of seconds: `new install`, then `COMPROMISED shankh-demo==1.0.0 (rebuild) [critical] sitecustomize.py`, then `posted to Arkiv`.)*
+
+> "Caught in two seconds: it rebuilt the package from source and found a file that's in nobody's code. Now let me show you why that matters — and why the alarm lives on ENS."
+
+*(Switch to the browser.)*
 
 ## 0. Open on the top of the page
 
@@ -120,6 +134,7 @@ About three minutes, conversational. It pitches **Shankh as it will be in its fi
 
 ## If something's off on stage
 
+- **The opener's install isn't caught within ~10 seconds:** say "here's the recorded run", show docs/evidence.md (entity `0x574edd31…`), and move on to the page — the ENS demo in section 04 doesn't depend on it.
 - **The "Live right now" strip says "Arkiv unreachable"**, or the key card says *Couldn't reach Arkiv just now*: the Arkiv testnet is having a slow moment. Reload once. If it's still down, say so plainly — "the testnet's having a moment; the page tells you instead of faking it" — and carry on. ENS and Sepolia parts are separate and still live.
 - **An attack shows "Couldn't check just now"** instead of *Blocked by Sepolia*: same thing, Sepolia was slow. Reload.
 - **`demo-ens.sh run` says the build is already flagged:** you ran it without a fresh build. Run `scripts/demo-ens.sh prepare` (about a minute), then `run` again.
