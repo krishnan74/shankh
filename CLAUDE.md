@@ -67,8 +67,8 @@ scripts/evidence.sh        # dry run by default; --write to regenerate docs/evid
 | | |
 |---|---|
 | GitHub repo | https://github.com/krishnan74/shankh (public, 7 commits pushed 2026-11-06) |
-| Deployer / operator | not deployed |
-| `KillSwitch` (Sepolia) | not deployed |
+| Deployer / operator | `0xDcbe075a907960951Cd4df379BB21461097eEa91` (funded, 1.76 Sepolia ETH as of 2026-11-06) |
+| `KillSwitch` (Sepolia) | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, maintainer confirmed on-chain |
 | ENS `shankh.eth` tree | not registered |
 | Status page | https://status-page-plum-nine.vercel.app (Vercel project `rdk07042004gmailcoms-projects/status-page`, connected to the GitHub repo for auto-deploy on push to `main`) |
 

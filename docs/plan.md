@@ -20,7 +20,7 @@
 | `shankhd` watcher (inventory, signals, matching) | planned (CLI stub only) | `shankh/shankh/cli.py` raises `NotImplementedError` |
 | Rebuild verifier (sandbox, file-by-file comparison, risk tiers) | planned | n/a |
 | AWS kill (quarantine policy, self-deactivation, CloudTrail audit) | planned | n/a |
-| `KillSwitch` contract | built locally, not deployed | `contracts/src/KillSwitch.sol`, 3 Foundry tests passing; deployer wallet is now funded (1.76 Sepolia ETH) — deploy is unblocked, just not done yet |
+| `KillSwitch` contract | **deployed to Sepolia** | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, deploy tx `0x9349e7b0e5d2e1880e6163fa1737914f25fdf125ecdb011dafff31babdb7aef2`, `maintainer()` confirmed on-chain to match the operator wallet |
 | ENS tree on Sepolia | planned | n/a |
 | Arkiv entities (`shankh.report`, `shankh.request`) and OSV mirror | planned (SDK wired, writers are stubs) | `arkiv/src/` |
 | Status page (live demo link for ENS) | deployed, placeholder content | https://status-page-plum-nine.vercel.app — confirmed publicly reachable, no auth wall |
@@ -121,7 +121,7 @@ Plan-2.md's design currently touches both Arkiv prizes (`shankh.report`/`shankh.
 ## Open (carried over from plan-2.md, plus new from this ingest)
 
 - ~~`vercel login`~~ — **done 2026-11-06**, status page deployed to https://status-page-plum-nine.vercel.app (placeholder content, confirmed publicly reachable).
-- ~~Funded Sepolia deployer wallet~~ — **done 2026-11-06.** The user provided an operator wallet (`OPERATOR_PRIVATE_KEY` in `.env`, 1.76 Sepolia ETH; a Claude-generated throwaway wallet from earlier in the session was unused and is dead weight in `.env`, safe to delete). Spike 1 (ENSv2 root-role revocation) passed — see the Status table and docs/feedback/ens.md. `KillSwitch` deploy is now unblocked but not yet done.
+- ~~Funded Sepolia deployer wallet~~ — **done 2026-11-06.** The user provided an operator wallet (`OPERATOR_PRIVATE_KEY` in `.env`, 1.76 Sepolia ETH; a Claude-generated throwaway wallet from earlier in the session was unused and is dead weight in `.env`, safe to delete). Spike 1 (ENSv2 root-role revocation) passed — see the Status table and docs/feedback/ens.md. ~~`KillSwitch` deploy~~ — **done 2026-11-06**, see Status table.
 - An AWS sandbox account/profile (`AWS_PROFILE=shankh-sandbox`, plus `shankh-audit` per plan-2.md's design) for spike 4 and all of the AWS-kill work.
 - **Actual submission deadline** — "Saturday 22:00" turned out to be kickoff (today, 2026-11-05), not the deadline; the real deadline still needs to come from the event page/schedule.
 - ~~Which Arkiv track to submit for~~ — **decided: Build on Arkiv** (`shankh.report`/`shankh.request`). The OSV mirror can still be built as a supporting feature but is not the submitted prize target.
