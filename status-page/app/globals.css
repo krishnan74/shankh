@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
+/*
+ * Color system: warm near-black / near-white (never pure #000/#fff), one signature accent
+ * (a conch-shell teal -- "shankh" is the conch blown to warn a village) used only on the
+ * primary CTA, section markers, and the one place the demo wants your eye. Semantic tier
+ * colors (critical/modified/match) stay plain red/amber/emerald -- those are live security
+ * data, not brand decoration, and must never be confused with the accent.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f7;
+  --foreground: #16161a;
+  --surface: #ffffff;
+  --border: rgba(22, 22, 26, 0.1);
+  --text-secondary: rgba(22, 22, 26, 0.64);
+  --text-tertiary: rgba(22, 22, 26, 0.42);
+  --accent: #0a7a6e;
+  --accent-contrast: #f3fffb;
+}
+
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --background: #0b0d0e;
+    --foreground: #f3f2ef;
+    --surface: #131617;
+    --border: rgba(243, 242, 239, 0.1);
+    --text-secondary: rgba(243, 242, 239, 0.64);
+    --text-tertiary: rgba(243, 242, 239, 0.42);
+    --accent: #2dd4bf;
+    --accent-contrast: #06201c;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #0b0d0e;
+  --foreground: #f3f2ef;
+  --surface: #131617;
+  --border: rgba(243, 242, 239, 0.1);
+  --text-secondary: rgba(243, 242, 239, 0.64);
+  --text-tertiary: rgba(243, 242, 239, 0.42);
+  --accent: #2dd4bf;
+  --accent-contrast: #06201c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-space-grotesk);
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quart-out: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.7s var(--ease-expo-out), transform 0.7s var(--ease-expo-out);
+  }
+  [data-reveal="in"] {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
