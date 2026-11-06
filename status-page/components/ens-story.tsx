@@ -87,10 +87,14 @@ export function EnsStory({
 
   return (
     <div className="flex flex-col gap-10">
-      <p className="text-center font-mono text-xs text-text-secondary">
-        shankh.eth <span className="text-text-tertiary">→</span> pypi.shankh.eth <span className="text-text-tertiary">→</span>{" "}
-        <span className="text-foreground">shankh-demo.pypi.shankh.eth</span>
-      </p>
+      <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
+        <span className="label mr-2 text-[10px] text-text-secondary">The name chain</span>
+        <span className="rounded-full border border-border bg-surface px-3 py-1 text-text-secondary">shankh.eth</span>
+        <span className="text-text-secondary" aria-hidden="true">→</span>
+        <span className="rounded-full border border-border bg-surface px-3 py-1 text-text-secondary">pypi.shankh.eth</span>
+        <span className="text-text-secondary" aria-hidden="true">→</span>
+        <span className="rounded-full border border-accent/50 bg-surface px-3 py-1 text-foreground">shankh-demo.pypi.shankh.eth</span>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         {cards.map((c, i) => (

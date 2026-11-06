@@ -13,12 +13,13 @@ import { Reveal } from "./reveal";
 import { Card, Eyebrow, SectionHeader } from "./ui";
 
 export function Hero({
-  latestReport,
+  reports,
   reportCount,
   revokedCount,
   emancipated,
 }: {
-  latestReport: Report | null;
+  /** null = Arkiv couldn't be reached; [] = reachable but no reports yet. */
+  reports: Report[] | null;
   reportCount: number | null;
   revokedCount: number | null;
   emancipated: boolean | null;
@@ -50,9 +51,11 @@ export function Hero({
           </div>
         </div>
 
-        <Reveal className="relative">
+        {/* isolate: gives the ripple's -z-10 a stacking context of its own, so it sits behind the
+            key card instead of behind the band's background (where it would vanish). */}
+        <Reveal className="relative isolate">
           <ConchRipple className="pointer-events-none absolute -inset-16 -z-10 h-[calc(100%+8rem)] w-[calc(100%+8rem)] opacity-70" rings={5} />
-          <KeyCard report={latestReport} />
+          <KeyCard reports={reports} />
         </Reveal>
       </div>
 
@@ -96,8 +99,9 @@ export function Incident() {
       <Reveal>
         <RaceTimeline />
       </Reveal>
-      <p className="mx-auto w-full max-w-3xl pt-4 text-center font-display text-2xl leading-snug italic text-balance sm:text-3xl">
-        Keys that leak in public get shut off in seconds. <span className="text-red-700 dark:text-red-400">Keys stolen by malware get nothing.</span>
+      <p className="max-w-3xl border-l-2 border-red-600/60 pl-6 font-display text-2xl leading-snug italic text-balance sm:text-3xl dark:border-red-500/60">
+        <span className="block">Keys that leak in public get shut off in seconds.</span>
+        <span className="block text-red-700 dark:text-red-400">Keys stolen by malware get nothing.</span>
       </p>
     </>
   );
@@ -162,7 +166,11 @@ export function StatusClose() {
     <Reveal>
       <Card tone="inverted" roomy className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
         <div className="flex flex-col gap-10">
-          <p className="font-display text-4xl leading-[1.02] font-black tracking-[-0.02em] sm:text-5xl">One catches it. Everyone is saved.</p>
+          <div className="flex flex-col gap-4">
+            <p className="label text-xs text-accent">04 · Where it stands</p>
+            <p className="font-display text-4xl leading-[1.02] font-black tracking-[-0.02em] sm:text-5xl">One catches it. Everyone is saved.</p>
+            <p className="text-lg text-balance text-background/70">What you just saw is real. Here&rsquo;s what&rsquo;s live, and what&rsquo;s next.</p>
+          </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
             <div>
               <p className="label mb-3 text-[10px] text-accent">Live today</p>

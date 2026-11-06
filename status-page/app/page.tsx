@@ -5,6 +5,7 @@ import { packageEnsInfo } from "@/lib/ens";
 import { killSwitchInfo } from "@/lib/killswitch";
 import { attackProofs } from "@/lib/proofs";
 import { pypiRegistryInfo, shankhRegistryAddress } from "@/lib/registry";
+import { withTimeout } from "@/lib/timeout";
 import { EnsStory } from "@/components/ens-story";
 import { EnsTree } from "@/components/ens-tree";
 import { LedgerTable } from "@/components/ledger-table";
@@ -19,18 +20,22 @@ import { Band, Detail, SectionHeader } from "@/components/ui";
 // Blocking dynamic render, no static shell -- the whole point is every request reads live.
 export const instant = false;
 
+const READ_TIMEOUT_MS = 4000;
+
 export default async function Home() {
   await connection(); // forces per-request dynamic rendering -- without this, cacheComponents would prerender this page statically at build time and freeze whatever it saw then, which is exactly the hard-coded-values failure mode the ENS track rules out
 
+  // Every live read is capped (lib/timeout.ts): one stalled endpoint must degrade its own section,
+  // never hold the whole page hostage.
   const [reports, killSwitch, packageEns, block, pypiRegistry] = await Promise.all([
-    recentReports().catch(() => null),
-    killSwitchInfo().catch(() => null),
-    packageEnsInfo().catch(() => null),
-    latestBlockInfo().catch(() => null),
-    pypiRegistryInfo().catch(() => null),
+    withTimeout(recentReports(), READ_TIMEOUT_MS).catch(() => null),
+    withTimeout(killSwitchInfo(), READ_TIMEOUT_MS).catch(() => null),
+    withTimeout(packageEnsInfo(), READ_TIMEOUT_MS).catch(() => null),
+    withTimeout(latestBlockInfo(), READ_TIMEOUT_MS).catch(() => null),
+    withTimeout(pypiRegistryInfo(), READ_TIMEOUT_MS).catch(() => null),
   ]);
   // The attack simulations run as the address that deployed the tree -- read live from KillSwitch.
-  const proofs = killSwitch ? await attackProofs(killSwitch.maintainer).catch(() => null) : null;
+  const proofs = killSwitch ? await withTimeout(attackProofs(killSwitch.maintainer), READ_TIMEOUT_MS).catch(() => null) : null;
   const shankhRegistry = shankhRegistryAddress();
 
   return (
@@ -44,7 +49,7 @@ export default async function Home() {
         <section className="bg-background">
           <div className="mx-auto w-full max-w-6xl px-6 pt-16 pb-24 sm:px-10 sm:pt-24 sm:pb-32">
             <Hero
-              latestReport={reports?.[0] ?? null}
+              reports={reports}
               reportCount={reports?.length ?? null}
               revokedCount={packageEns ? packageEns.revokedArtifacts.length : null}
               emancipated={pypiRegistry ? pypiRegistry.emancipated : null}
@@ -67,6 +72,7 @@ export default async function Home() {
           />
           <SolutionSteps />
           <div className="flex flex-col gap-6">
+            <p className="label text-[10px] text-text-secondary">Steps 1 and 2, for real</p>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
               <Terminal
                 title="shankh verify evilpkg==1.0.0 — a recorded run"
@@ -101,8 +107,11 @@ export default async function Home() {
 
         {/* 04 -- where it stands */}
         <Band>
-          <SectionHeader id="beat-status" kicker="04 · Where it stands" headline="What you just saw is real." />
-          <StatusClose />
+          {/* The closing panel carries its own label and one headline -- a separate SectionHeader
+              here stacked two big headlines on top of each other. */}
+          <div id="beat-status" className="scroll-mt-24">
+            <StatusClose />
+          </div>
         </Band>
 
         {/* Progressive disclosure: everything a technical reviewer wants, none of it in the way. */}
@@ -110,7 +119,7 @@ export default async function Home() {
           <div id="ledger" className="scroll-mt-24">
             <SectionHeader kicker="More detail" headline="For the technically curious." />
           </div>
-          <div className="mx-auto w-full max-w-3xl sm:pl-[25%]">
+          <div className="flex w-full flex-col">
             <Detail summary="01 · How it works, step by step">
               <Stepper />
             </Detail>

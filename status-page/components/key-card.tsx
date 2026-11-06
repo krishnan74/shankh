@@ -8,7 +8,8 @@ import { TierPill } from "./ui";
  */
 const STATES = ["Installed", "Caught", "Alarm raised", "Keys off"] as const;
 
-export function KeyCard({ report }: { report: Report | null }) {
+export function KeyCard({ reports }: { reports: Report[] | null }) {
+  const report = reports?.[0] ?? null;
   const reached = report ? (report.malicious ? 3 : 1) : 0; // malicious: through "Alarm raised"; clean: just "Installed"
 
   return (
@@ -24,7 +25,9 @@ export function KeyCard({ report }: { report: Report | null }) {
           </div>
         </>
       ) : (
-        <p className="mt-3 text-sm text-text-tertiary">No alarms on Arkiv yet.</p>
+        <p className="mt-3 text-sm text-text-secondary">
+          {reports === null ? "Couldn\u2019t reach Arkiv just now \u2014 reload to retry." : "No alarms on Arkiv yet."}
+        </p>
       )}
 
       <ol className="mt-6 flex items-center">

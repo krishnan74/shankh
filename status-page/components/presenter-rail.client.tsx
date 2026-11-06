@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * A fixed rail (lg+ only) listing the page's four parts. The current part highlights in teal as
- * you scroll, each one is a jump link, and j/k step to the next/previous part -- a presenter can
- * drive the whole pitch without hunting for a scrollbar. Hidden below lg (the in-flow section
- * labels carry the same numbering there).
+ * A fixed rail listing the page's four parts: numbers from 1280px, the active part's name from
+ * 1600px -- below those widths the page's left margin is too narrow and it would sit on the
+ * content. The current part highlights in teal as you scroll, each one is a jump link, and j/k
+ * step between parts. The in-flow section labels carry the same numbering when it's hidden.
  */
 import { useEffect, useRef, useState } from "react";
 
@@ -74,7 +74,7 @@ export function PresenterRail() {
               }`}
             >
               <span className="label mr-1.5 text-[10px]">{beat.n}</span>
-              <span className={active ? "inline" : "sr-only group-hover:not-sr-only"}>{beat.label}</span>
+              <span className={active ? "sr-only min-[1600px]:not-sr-only" : "sr-only"}>{beat.label}</span>
             </span>
           </a>
         );

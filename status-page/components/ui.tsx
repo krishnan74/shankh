@@ -54,9 +54,11 @@ export function Band({ children, alt = false, className = "" }: { children: Reac
 }
 
 /**
- * The repeating chapter header (landing-page-playbook.md #1, #4): a narrow kicker column and a
- * wide headline+lede column on the same 12-col grid, so section markers read as a running ledger
- * down the page instead of each section centering its own title independently.
+ * The repeating chapter header (landing-page-playbook.md #1): kicker, headline, lede -- stacked on
+ * the same left edge as the evidence below it (cards, terminal, tables), so every section reads
+ * in one straight line. Deliberately not a side-column layout: a kicker alone in a 3-of-12 column
+ * left a dead block of white beside every headline, and pushed the headline off the content's edge.
+ * The presenter rail already gives the "running ledger" of section numbers on desktop.
  */
 export function SectionHeader({
   kicker,
@@ -71,14 +73,12 @@ export function SectionHeader({
   id?: string;
 }) {
   return (
-    <div id={id} className="mx-auto grid w-full max-w-3xl scroll-mt-24 grid-cols-12 gap-x-6 gap-y-4">
-      <div className="col-span-12 sm:col-span-3 sm:pt-2">
-        <Eyebrow>{kicker}</Eyebrow>
-      </div>
-      <div className="col-span-12 flex flex-col gap-5 sm:col-span-9">
-        <h2 className="font-display text-3xl leading-[1.1] font-bold tracking-tight text-balance sm:text-4xl">{headline}</h2>
-        {lede && <p className="max-w-xl text-lg leading-relaxed text-text-secondary">{lede}</p>}
-      </div>
+    <div id={id} className="flex w-full scroll-mt-24 flex-col gap-5">
+      <Eyebrow>{kicker}</Eyebrow>
+      <h2 className="max-w-3xl font-display text-3xl leading-[1.08] font-bold tracking-tight text-balance sm:text-4xl lg:text-[2.75rem]">
+        {headline}
+      </h2>
+      {lede && <p className="max-w-2xl text-lg leading-relaxed text-text-secondary">{lede}</p>}
     </div>
   );
 }
@@ -106,7 +106,7 @@ export function RevertProof({ attempt, error, txHref }: { attempt: string; error
  * <details>/<summary> -- accessible and animation-free by default, styled to match the page. */
 export function Detail({ summary, children }: { summary: string; children: React.ReactNode }) {
   return (
-    <details className="group border-b border-border py-4 first:pt-0 last:border-b-0">
+    <details className="group border-b border-border py-5 first:border-t">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left font-medium">
         {summary}
         <span className="shrink-0 text-text-tertiary transition-transform duration-300 [transition-timing-function:var(--ease)] group-open:rotate-45">

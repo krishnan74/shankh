@@ -186,7 +186,9 @@ body {
   z-index: 40;
   display: none;
 }
-@media (min-width: 1024px) {
+/* Only from 1280px: below that the page's left margin is narrower than the rail, and it would
+   sit on top of the content. */
+@media (min-width: 1280px) {
   .presenter-rail {
     display: flex;
   }

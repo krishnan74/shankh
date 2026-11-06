@@ -27,7 +27,7 @@ The page is a stage prop for a 3-minute pitch and a self-explaining product page
 
 The page tells one story in four numbered parts, in the same order as the pitch: **01 What happened** (the LiteLLM incident and the two-clock timeline) → **02 What Shankh does** (three plain steps, each tagged Live or Next, then the real recorded run and the live Arkiv feed) → **03 Why the alarm can't be silenced** (ENS in three plain cards, then "we tried to break it" with the chain's live answer) → **04 Where it stands** (live today vs next, and the conch). Plain language comes first; raw revert strings sit behind "Show the raw error", and the full ENS tree with every address, the partner-track notes and the ledger sit in **More detail**.
 
-Each part is a full-width `Band` that alternates between the page background and the white surface, with a hairline between bands, so every part reads as its own page. Vertical space is deliberately generous (`py-24`/`py-32` per band, wide gaps inside) — the page should breathe, not crowd. Two widths inside a band: reading content (section headers) at `max-w-3xl`; evidence (hero, timeline, steps, terminal + feed, ENS cards, closing panel) breaks out to `max-w-6xl`. The 12-column kicker/headline header (`SectionHeader`) is the page's spine. A fixed presenter rail (`lg+`) shows the four parts by number, names the current one, and `j`/`k` jump between them.
+Each part is a full-width `Band` that alternates between the page background and the white surface, with a hairline between bands, so every part reads as its own page. Vertical space is deliberately generous (`py-24`/`py-32` per band, wide gaps inside) — the page should breathe, not crowd. Two widths inside a band: reading content (section headers) at `max-w-3xl`; evidence (hero, timeline, steps, terminal + feed, ENS cards, closing panel) breaks out to `max-w-6xl`. Every section header (`SectionHeader`) stacks its label, headline and intro on the same left edge as the content below it, so each section reads in one straight line. An earlier version put the label in its own narrow column, which left a dead block of white beside every headline. A fixed presenter rail shows the four parts by number from 1280px (and the current part's name from 1600px — below those widths it would sit on the content), and `j`/`k` jump between them.
 
 ## Live reads (all request-time, none cached)
 
@@ -40,7 +40,7 @@ Each part is a full-width `Band` that alternates between the page background and
 | The two "REVERTED" attack attempts | `eth_call` simulations re-run every request (`lib/proofs.ts`) |
 | Key card, report feed, proof-strip counts, ledger | `shankh.report` entities on Arkiv (`lib/arkiv.ts`) |
 
-Any failed read renders an honest degraded state ("couldn't reach Sepolia just now — reload to retry"), never a placeholder value. If an attack simulation ever stops reverting, the page says so in red instead of showing a stale revert.
+Every read is capped at 4 seconds (`lib/timeout.ts`): the Arkiv testnet RPC was observed stalling for over a minute, which without a cap froze the whole page. Any failed or slow read renders an honest degraded state ("couldn't reach Sepolia just now — reload to retry"), never a placeholder value. If an attack simulation ever stops reverting, the page says so in red instead of showing a stale revert.
 
 ## Deliberate deviations from the redesign brief (correctness)
 
