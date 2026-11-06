@@ -17,4 +17,9 @@ First-hand only. Evidence per item. What worked as well as what didn't.
 **Evidence:** same entity/tx as above.
 **Suggestion:** n/a — this half worked cleanly.
 
+## 4. Selecting a newly added schema column silently drops every older entity
+**What happened:** We added two indexed columns (`artifactSha256`, `ensRevoked`) to `shankh.report`. Older entities were written before they existed. Selecting the new columns didn't return them as empty or undefined on the old rows — it returned *no rows at all* for entities lacking the attribute. Our status page's live report feed showed "0 reports" on production for several deploys before we noticed, with no error anywhere.
+**Evidence:** same live testnet, same schema name: `.select({ $key, package })` returns 3 entities; adding `artifactSha256: true, ensRevoked: true` to the select returns 0. Fixed in `status-page/lib/arkiv.ts` by querying base columns for everything and merging the new columns from a second query by `$key`.
+**Suggestion:** Either return missing attributes as absent/undefined on the rows that lack them (the behavior a `select` reads as), or document prominently that selecting an attribute acts as an existence filter — and ideally say so in the schema-evolution docs, since adding a column to a live schema is exactly when this bites.
+
 Still open: expiry ceiling, query performance/syntax at scale (docs/plan.md spike 3's remaining unknowns).

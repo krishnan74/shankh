@@ -43,32 +43,37 @@ export async function recentReports(limit = 20): Promise<Report[]> {
 
   // $createdAt isn't a queryable system attribute, so this can't sort by recency server-side --
   // newest-first ordering, if wanted, has to come from the caller tracking keys over time instead.
-  const page = await client
-    .select({
-      $key: true,
-      package: true,
-      version: true,
-      tier: true,
-      malicious: true,
-      reporter: true,
-      findings: true,
-      artifactSha256: true,
-      ensRevoked: true,
-    })
-    .from(ShankhReport)
-    .limit(limit)
-    .fetch();
+  // Two queries, not one: selecting artifactSha256/ensRevoked makes Arkiv return only entities
+  // that HAVE those attributes, which silently drops every report written before they were added
+  // to the schema (verified: 3 entities with the base select, 0 when the new columns are selected).
+  // So: fetch everything on the base columns, then merge the newer columns in where they exist.
+  const [page, extras] = await Promise.all([
+    client
+      .select({ $key: true, package: true, version: true, tier: true, malicious: true, reporter: true, findings: true })
+      .from(ShankhReport)
+      .limit(limit)
+      .fetch(),
+    client
+      .select({ $key: true, artifactSha256: true, ensRevoked: true })
+      .from(ShankhReport)
+      .limit(limit)
+      .fetch()
+      .catch(() => null),
+  ]);
+  const extraByKey = new Map((extras?.entities ?? []).map((e) => [e.$key, e]));
 
-  return page.entities.map((entity) => ({
-    key: entity.$key,
-    package: entity.package.value,
-    version: entity.version.value,
-    tier: entity.tier.value,
-    malicious: entity.malicious.value,
-    reporter: entity.reporter.value,
-    findings: JSON.parse(hexToString(entity.findings.value)) as { relativePath: string; tier: string }[],
-    // older entities (written before this schema addition) won't have these columns set
-    artifactSha256: entity.artifactSha256?.value ?? "",
-    ensRevoked: entity.ensRevoked?.value ?? false,
-  }));
+  return page.entities.map((entity) => {
+    const extra = extraByKey.get(entity.$key);
+    return {
+      key: entity.$key,
+      package: entity.package.value,
+      version: entity.version.value,
+      tier: entity.tier.value,
+      malicious: entity.malicious.value,
+      reporter: entity.reporter.value,
+      findings: JSON.parse(hexToString(entity.findings.value)) as { relativePath: string; tier: string }[],
+      artifactSha256: extra?.artifactSha256.value ?? "",
+      ensRevoked: extra?.ensRevoked.value ?? false,
+    };
+  });
 }

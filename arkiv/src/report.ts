@@ -49,15 +49,9 @@ export async function writeReport(report: VerificationReport) {
 export async function findExistingReport(pkg: string, version: string) {
   const client = arkivPublicClient();
   const page = await client
-    .select({
-      $key: true,
-      tier: true,
-      malicious: true,
-      reporter: true,
-      findings: true,
-      artifactSha256: true,
-      ensRevoked: true,
-    })
+    // Base columns only: selecting artifactSha256/ensRevoked would make Arkiv return only entities
+    // that have them, silently missing every report written before they were added to the schema.
+    .select({ $key: true, tier: true, malicious: true, reporter: true, findings: true })
     .from(ShankhReport)
     .where(and(eq("package", pkg), eq("version", version)))
     .fetch();
