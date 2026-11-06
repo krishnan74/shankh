@@ -12,6 +12,7 @@ dependencies = [
 
 [project.scripts]
 shankh = "shankh.cli:app"
+shankhd = "shankh.daemon:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -6,7 +6,7 @@ Shankh was built with Claude Code (Anthropic's coding agent) working in this rep
 
 Most of the code and most of the docs:
 
-- **The CLI (`shankh/`):** the rebuild verifier, the build fingerprint, the ENS reader, the registry sweep, the trusted-reporter loop, the Arkiv bridge, and all 34 tests.
+- **The CLI (`shankh/`):** the `shankhd` watcher, the rebuild verifier, the build fingerprint, the ENS reader, the registry sweep, the trusted-reporter loop, the Arkiv bridge, and all 39 tests.
 - **Contracts and chain scripts:** `contracts/src/KillSwitch.sol` and its 3 Foundry tests, and every script under `scripts/` (ENS tree registration, adding packages and reporters, the demo scripts, the inert poisoned test package).
 - **Arkiv package (`arkiv/`):** schema, writer, readers, and the `arkiv/*.md` judging docs.
 - **Landing page (`status-page/`):** all components and live reads, built to design documents the team provided (below).
@@ -25,7 +25,8 @@ Every on-chain transaction and Arkiv write in `docs/evidence.md` was sent by com
 
 ## What was reviewed line by line
 
-- No code has been confirmed as reviewed line by line yet. `KillSwitch.sol` in particular hasn't been, and the README, plan and design docs say so. Testnet only.
+- `contracts/src/KillSwitch.sol`: reviewed line by line by the team (2026-11-06). Not externally audited; testnet only.
+- Nothing else has been confirmed as reviewed line by line.
 - What *was* checked, by running it rather than reading it: every claim in `docs/evidence.md` comes from a real run, and the landing page was checked in a real browser at desktop and phone widths before each deploy.
 
 ## Limitations of that process

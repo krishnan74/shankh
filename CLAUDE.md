@@ -11,7 +11,7 @@ Read [`docs/plan.md`](docs/plan.md) first — it opens with a status table of wh
 - Attribution: end commits with `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>` and the `Claude-Session:` trailer, per the system reminder active in-session — don't hardcode a different policy here if that reminder changes.
 - **Never hard-wrap prose in markdown.** One paragraph or bullet = one line, however long.
 - **Keep `docs/build-log.md` and `docs/feedback/*` current as the build progresses.** Only first-hand experience, evidence per item, a concrete suggestion per item. Never padded.
-- **`contracts/src/KillSwitch.sol` has not been reviewed line by line yet.** Flag this explicitly before it's ever pointed at mainnet or treated as audited; it's a working first pass, not a reviewed contract.
+- **`contracts/src/KillSwitch.sol` was reviewed line by line by the user on 2026-11-06, but never externally audited.** Say "reviewed", never "audited"; flag that before it's ever pointed at mainnet. Any change to it after that review is unreviewed again.
 - **Never commit `.env`, private keys, or AWS credentials.** The AWS sandbox account's keys are intentionally disposable — treat them that way, but don't paste them into docs or commit messages regardless.
 
 ## Toolchain — not on PATH by default
@@ -29,7 +29,7 @@ vercel --version
 ```bash
 # shankh/ (Python watcher + CLI)
 cd shankh && source .venv/bin/activate
-pytest                    # 34 tests: inventory/fingerprint/verify/ens/scan/trust/report units + one live check against real PyPI
+pytest                    # 39 tests: inventory/fingerprint/verify/ens/scan/trust/daemon/report units + one live check against real PyPI
 ruff check .              # lint
 shankh verify <pkg>==<version>                    # real PyPI by default, auto-reports to Arkiv
 shankh verify <pkg>==<version> --find-links <dir> # against a local replay index instead
@@ -37,6 +37,7 @@ shankh verify <pkg>==<version> --no-report        # skip the Arkiv write
 shankh scan                                       # check every installed package against every ENS kill switch under pypi.shankh.eth
 shankh scan --site-packages <dir>                 # ...a specific environment's packages instead
 shankh scan --trust <name>.reporters.shankh.eth    # also act on that reporter's Arkiv alarms, each re-checked locally (or list them in ~/.config/shankh/trust.toml)
+shankhd --trust <name>.reporters.shankh.eth        # the watcher: rebuild every new install as it lands, sweep ENS + Arkiv every minute (--once for one round)
 shankh fingerprint <pkg>                          # the installed build's fingerprint -- what a maintainer flags via KillSwitch.revoke()
 # ENS reads need PYPI_REGISTRY_ADDRESS and SEPOLIA_RPC_URL exported; --trust also needs ENS_REGISTRY_ADDRESS (shankh.eth's registry).
 
@@ -65,6 +66,8 @@ scripts/demo.sh            # dry run (--recap) by default; --write to run the re
 scripts/evidence.sh        # dry run by default; --write to regenerate docs/evidence.md
 scripts/demo-ens.sh prepare   # fresh, unflagged poisoned demo build in .demo/ (inert; never starts its Python)
 scripts/demo-ens.sh run       # live: scan (clean) -> maintainer flags it on Sepolia -> scan (COMPROMISED, alarm to Arkiv)
+scripts/demo-watch.sh prepare # fresh poisoned build + an empty throwaway victim environment in .demo-watch/
+scripts/demo-watch.sh run     # live: shankhd running -> pip install the poisoned build -> shankhd rebuilds it, COMPROMISED, posts to Arkiv
 scripts/demo-arkiv.sh prepare # fresh poisoned build installed on two throwaway "machines" in .demo-arkiv/
 scripts/demo-arkiv.sh run     # live: B scans (clean) -> A rebuilds it, posts CRITICAL to Arkiv -> B reads the trusted alarm, re-checks, COMPROMISED
 scripts/ens/add-package-sepolia.sh <label>   # register another package under pypi.shankh.eth with its own resolver + KillSwitch
@@ -114,4 +117,4 @@ plan-2.md, project-overview.md   Original unedited inputs — provenance only, s
 
 ## Status
 
-The real ENS tree is live on Sepolia (`shankh.eth` → `pypi.shankh.eth`, emancipated → `shankh-demo.pypi.shankh.eth`, split resolver grants, per-package `KillSwitch`) — rehearsed on an Anvil fork first, which caught a real role-bitmap bug before touching real Sepolia. `shankh verify` is a real, working rebuild verifier that auto-reports to Arkiv on every run — the full "verify a package, alarm lands on Arkiv" loop has run end to end against a real malicious wheel and a real entity. **The ENS tree, the verifier, and the status page are now wired together**: `shankh/shankh/ens/` reads the maintainer's on-chain revocation (kill signal #2) and folds it into `verify()`'s result, which travels to the Arkiv report, which the status page re-reads live alongside a direct live read of the same ENS text records (`status-page/lib/ens.ts`) — the whole chain from CLI to public page is real data, no mocks, no build-time freeze, and no longer three separately-proven pieces. The Arkiv side now closes the loop too: `shankh scan --trust` reads recent alarms from reporters named on ENS (`<name>.reporters.shankh.eth`), keeps only those signed by that reporter's wallet and about a build installed here, and re-checks each locally before calling it compromised — proven live across two throwaway environments. Everything else functional (watcher daemon loop, AWS kill sequence, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline). Before pitching to partner judges, read `docs/pitch-study-guide.md` first.
+The real ENS tree is live on Sepolia (`shankh.eth` → `pypi.shankh.eth`, emancipated → `shankh-demo.pypi.shankh.eth`, split resolver grants, per-package `KillSwitch`) — rehearsed on an Anvil fork first, which caught a real role-bitmap bug before touching real Sepolia. `shankh verify` is a real, working rebuild verifier that auto-reports to Arkiv on every run — the full "verify a package, alarm lands on Arkiv" loop has run end to end against a real malicious wheel and a real entity. **The ENS tree, the verifier, and the status page are now wired together**: `shankh/shankh/ens/` reads the maintainer's on-chain revocation (kill signal #2) and folds it into `verify()`'s result, which travels to the Arkiv report, which the status page re-reads live alongside a direct live read of the same ENS text records (`status-page/lib/ens.ts`) — the whole chain from CLI to public page is real data, no mocks, no build-time freeze, and no longer three separately-proven pieces. The Arkiv side now closes the loop too: `shankh scan --trust` reads recent alarms from reporters named on ENS (`<name>.reporters.shankh.eth`), keeps only those signed by that reporter's wallet and about a build installed here, and re-checks each locally before calling it compromised — proven live across two throwaway environments. `shankhd`, the watcher, now runs all of it continuously: every new install is rebuilt as it lands, ENS and trusted Arkiv alarms are swept every minute, and a compromise calls `shankh.kill.respond()` — which still says plainly that the key shut-off isn't built. What is still a stub: the AWS kill sequence and the `shankh.request` writer — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline). Before pitching to partner judges, read `docs/pitch-study-guide.md` first.

@@ -34,7 +34,9 @@ Shankh moves the warning somewhere the attacker can't reach. It runs on your mac
 
 All three ran live: a maintainer flagged a build on Sepolia (confirmed in 7 seconds) and `shankh scan` caught it from ENS alone; a second machine picked up another machine's Arkiv alarm, re-checked it and confirmed it. The landing page reads ENS, the `KillSwitch` and Arkiv live on every request.
 
-Not built yet: automatically quarantining and deactivating the stolen keys, a background watcher that runs the sweep on every install, and anything beyond Python packages. The `KillSwitch` contract hasn't been reviewed line by line. In the demos, one wallet plays maintainer, operator and reporter.
+`shankhd`, the background watcher, ties it together: it rebuilds every new install the moment it lands and sweeps ENS and Arkiv every minute. A poisoned package installed while it ran was caught two seconds later with no command typed.
+
+Not built yet: automatically quarantining and deactivating the stolen keys, and anything beyond Python packages. The `KillSwitch` contract was reviewed line by line by the team but not externally audited. In the demos, one wallet plays maintainer, operator and reporter.
 
 ## How it's built
 
@@ -60,8 +62,8 @@ The hard parts:
 ## What's next
 
 1. Automatic key shut-off: quarantine and deactivate the AWS keys a confirmed bad build could reach, with a CloudTrail audit trail.
-2. `shankhd`, the background watcher that runs the sweep on every install.
-3. A line-by-line review of `KillSwitch.sol`, and private chain reads through Anon-RPC.
+2. Running `shankhd` as a system service with memory across restarts, and covering Docker images.
+3. Private chain reads through Anon-RPC, and an external audit of `KillSwitch.sol`.
 
 ## Track: ENS — Best Use of ENSv2
 

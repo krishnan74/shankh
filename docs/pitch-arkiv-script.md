@@ -52,7 +52,7 @@ About three minutes, conversational. Pitches **Shankh as it will be in its final
 
 ## 6. Where it stands, and the ask
 
-> "Live today: the verifier, alarms written to Arkiv, machines reading and acting on them, trust by ENS name, and a public page reading Arkiv live. Not yet: the background watcher, the automatic key lockdown, and a second entity type, `shankh.request`, for asking the network to check a package you can't check yourself."
+> "Live today: the verifier, alarms written to Arkiv, machines reading and acting on them, trust by ENS name, and a public page reading Arkiv live. A background watcher that rebuilds every new install as it lands. Not yet: the automatic key lockdown, and a second entity type, `shankh.request`, for asking the network to check a package you can't check yourself."
 
 > "Two questions for you: what's the right way to say 'most recent' on Arkiv? We sort by expiry date today because created-at can't be sorted on. And how long should alarms live? We use 90 days."
 

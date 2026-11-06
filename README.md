@@ -13,7 +13,7 @@ In October 2026, the LiteLLM 1.107.0 package on PyPI was compromised: for about 
 1. **Check.** `shankh verify` rebuilds an installed package's file list from its public source on PyPI and compares file by file. A file that's in nobody's source code — like the `sitecustomize.py` the LiteLLM attack used to run on every Python start — is CRITICAL.
 2. **Raise the alarm on Arkiv.** The finding is written to Arkiv as a `shankh.report` entity, signed by the finder's own wallet: package, version, the exact build's fingerprint, and what was wrong.
 3. **Let the maintainer flag it on ENS.** Every package gets a name under `pypi.shankh.eth`. The real maintainer flags a bad build through that package's `KillSwitch` contract, which writes it to the name's `shankh.revoked` text record. Nobody else can write that record — not someone who stole the maintainer's PyPI login, and not us: `pypi.shankh.eth` is emancipated.
-4. **Every machine sweeps.** `shankh scan` fetches the bad-builds list of *every* package under `pypi.shankh.eth`, plus recent alarms from reporters you trust (named on ENS under `reporters.shankh.eth`), and compares them with what's installed — locally, so no one learns what you run. A trusted alarm is re-checked on your machine before it counts.
+4. **Every machine watches and sweeps.** `shankhd` runs in the background: it rebuilds every new install the moment it lands, and every minute it fetches the bad-builds list of *every* package under `pypi.shankh.eth`, plus recent alarms from reporters you trust (named on ENS under `reporters.shankh.eth`), and compares them with what's installed — locally, so no one learns what you run. A trusted alarm is re-checked on your machine before it counts.
 5. **Act** *(not built yet)*. On a confirmed hit, the cloud keys the bad build could reach are quarantined and deactivated automatically.
 
 The landing page's section 03 has a diagram of how ENS, Arkiv and the Ethereum Foundation's CROPS principles fit together.
@@ -26,6 +26,7 @@ The landing page's section 03 has a diagram of how ENS, Arkiv and the Ethereum F
 | ENSv2 tree: `shankh.eth` → `pypi.shankh.eth` (emancipated) → 3 packages | Sepolia | registries `0xb95110b3F8d89fb8e9858fC414E21475DA4DF15c` / `0x8634b9f567Fa84da5BCe08150Aa323424382a3a4`; re-granting a revoked role reverts `EACCannotGrantRoles` live |
 | Per-package `KillSwitch` → `shankh.revoked` | Sepolia, `0x1126b7aBe8b0Db262cBa84b6b5a377D002351c5a` (`shankh-demo`) | a maintainer flagged a build live (tx `0xef5625a0…7379`, confirmed in 7s) and `shankh scan` caught it from ENS alone |
 | `shankh scan` — registry sweep | runs locally | every package read from the registry's own `LabelRegistered` events |
+| `shankhd` — the watcher: rebuilds every new install as it lands, sweeps ENS and trusted Arkiv alarms every minute | runs locally | a poisoned package installed while it ran was caught 2s later with no command typed, finding posted to Arkiv: entity `0x574edd31…cf10` |
 | `shankh scan --trust` — act on trusted reporters' Arkiv alarms | runs locally, reads Sepolia + Arkiv | machine A posted entity `0xe7d2102e…7ec0`; machine B read it, re-checked it locally, COMPROMISED |
 | Reporter identity `shankh-team.reporters.shankh.eth` | Sepolia, registry `0x9b833a137cf9e24200394cb9a3af5df13b1db28e` (emancipated) | `shankh.signer` → `0xDcbe075a907960951Cd4df379BB21461097eEa91`, writable only by that wallet |
 | `shankh.report` entities | Arkiv testnet (chain 7794095) | written by `0xDcbe075a907960951Cd4df379BB21461097eEa91` |
@@ -66,13 +67,14 @@ cp .env.example .env   # public Sepolia addresses are pre-filled; add ARKIV_ACCE
 set -a && source .env && set +a
 shankh/.venv/bin/shankh scan                                              # this environment vs every ENS kill switch
 shankh/.venv/bin/shankh scan --trust shankh-team.reporters.shankh.eth     # ...and that reporter's Arkiv alarms (needs ARKIV_ACCESS_KEY)
+shankh/.venv/bin/shankhd --trust shankh-team.reporters.shankh.eth         # keep watching: rebuild every new install, sweep every minute
 
 # Contracts, landing page
 (cd contracts && forge install foundry-rs/forge-std --no-commit && forge test)
 (cd status-page && npm install && npm run build)
 ```
 
-The live demos (`scripts/demo-ens.sh`, `scripts/demo-arkiv.sh`) send real transactions and need the testnet keys in `.env`; each has `prepare` and `run` steps, and the poisoned test package they build is inert. They never start Python inside the poisoned environment.
+The live demos (`scripts/demo-ens.sh`, `scripts/demo-arkiv.sh`, `scripts/demo-watch.sh`) send real transactions and need the testnet keys in `.env`; each has `prepare` and `run` steps, and the poisoned test package they build is inert. They never start Python inside the poisoned environment.
 
 ## CROPS
 
@@ -88,9 +90,9 @@ No analytics or third-party trackers on the landing page.
 ## Limitations
 
 - **The key shut-off isn't built.** Today Shankh detects and warns; it doesn't yet quarantine or deactivate AWS keys. The AWS sandbox for it hasn't been set up.
-- **No background watcher.** `shankh scan` and `shankh verify` run when you run them; `shankhd`, which would run them on every install, is a stub.
+- **The watcher's memory is per run.** `shankhd` rebuilds every new install and re-sweeps ENS and Arkiv every minute, but on restart it treats what's already installed as the baseline (`--verify-existing` rebuilds it all) and doesn't run as a system service yet.
 - **Python packages only.** Docker images and other ecosystems are in the design, not the code.
-- **`KillSwitch.sol` hasn't been reviewed line by line.** It's a working first pass with 3 Foundry tests, not audited. Testnet only.
+- **`KillSwitch.sol` is reviewed, not audited.** The team reviewed it line by line; it has 3 Foundry tests and no external audit. Testnet only.
 - **One wallet plays every role in the demo** — operator, maintainer, and reporter — so the live demos show the mechanism, not independent parties.
 - **Re-checks rebuild from PyPI's source archive.** A package with no source archive, or a malicious change that's also in the published source, isn't caught by the rebuild (the ENS and Arkiv signals still apply).
 - **Testnets only:** Sepolia and the Arkiv testnet. Public RPC latency is 5–8s per call on a bad network; a scan takes 10–20s.

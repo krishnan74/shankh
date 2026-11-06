@@ -153,14 +153,15 @@ export function SolutionSteps() {
 export function StatusClose() {
   const live = [
     "Catches a real malicious package by rebuilding it from source",
-    "Signs the alarm onto Arkiv for every other machine",
-    "Reads the maintainer's ENS kill switch, and treats a flagged build as critical",
+    "Watches installs on its own and checks each one as it lands",
+    "Signs the alarm onto Arkiv, and acts on trusted reporters' alarms after re-checking them",
+    "Reads every maintainer's ENS kill switch, and treats a flagged build as critical",
     "ENS namespace we provably can't take back",
   ];
   const next = [
     "Switching the AWS keys off automatically",
-    "An always-on watcher, so checks run without anyone typing a command",
-    "Acting on other people's alarms after re-checking them locally",
+    "Docker images and other ecosystems beyond Python",
+    "Private chain reads (Anon-RPC)",
   ];
   return (
     <Reveal>
