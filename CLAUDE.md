@@ -46,6 +46,8 @@ cd status-page
 npm run lint
 npm run build
 npm run dev                # local site
+# production deploy: from the REPO ROOT, not from inside status-page/ (Root Directory is set on the Vercel project)
+cd .. && vercel deploy --prod --yes --cwd .
 
 # arkiv/ (TS, Arkiv SDK)
 cd arkiv
@@ -73,13 +75,14 @@ scripts/evidence.sh        # dry run by default; --write to regenerate docs/evid
 | `KillSwitch` (Sepolia) | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, maintainer confirmed on-chain |
 | `shankh.report` (Arkiv testnet) | writer live — real entity `0x8110825324441ccf57ece02ced20ac72ff1de16e8eb56630e3c0b47fc3732ebf`, write tx `0x63442b3e069937b38284504655cf6d78d1c55fd10c8e4eaa5246ec6a3e87b1a1` |
 | ENS `shankh.eth` tree | not registered |
-| Status page | https://status-page-plum-nine.vercel.app — reads live `KillSwitch` state (Sepolia) and real `shankh.report` entities (Arkiv testnet), server-side, per request. `KILLSWITCH_ADDRESS`/`SEPOLIA_RPC_URL`/`ARKIV_RPC_URL` set as Vercel prod env vars; `ARKIV_ACCESS_KEY` still needs adding manually (not secret, but blocked from shell automation — add via `vercel env add ARKIV_ACCESS_KEY production` or the dashboard) |
+| Status page | https://status-page-plum-nine.vercel.app — reads live `KillSwitch` state (Sepolia) and real `shankh.report` entities (Arkiv testnet), server-side, per request, confirmed via a real `curl` against the production URL. `KILLSWITCH_ADDRESS`/`SEPOLIA_RPC_URL`/`ARKIV_RPC_URL` set as Vercel prod env vars; `ARKIV_ACCESS_KEY` still needs adding manually (not secret, but blocked from shell automation — add via `vercel env add ARKIV_ACCESS_KEY production` or the dashboard). Vercel project's Root Directory is now correctly set to `status-page` — GitHub auto-deploy on push to `main` had actually been failing silently until 2026-11-06; manual deploys now run `vercel deploy --prod --yes --cwd .` from the repo root, not from inside `status-page/`. |
 
 ## Facts learned the hard way
 
 - `npm install -g <pkg>` fails with `EACCES` on this machine (`/usr/local/lib/node_modules` not user-writable) — use `brew install` / `brew install --cask` instead for global CLIs (hit this installing the Vercel CLI, 2026-11-05).
 - `piping `curl | bash`` installers (e.g. the official Foundry installer script) are blocked by the auto-mode permission classifier — use `brew install foundry` instead (2026-11-05).
 - `@arkiv-network/sdk` resolves cleanly from npm at `1.0.1` on Node 24 with no peer-dep issues — one of plan-2.md's "to verify at event" rows is already closed (2026-11-05).
+- A Vercel project's **Root Directory** must be set for a monorepo subfolder app, or GitHub-triggered auto-deploys fail (`Couldn't find any pages or app directory`) even though manual `vercel deploy --prod` run from inside that subfolder keeps working fine — the two paths aren't equivalent, and the failing one is silent unless you actually check `vercel ls`/the dashboard. Set via the Vercel MCP's `update_project` (`rootDirectory`), or the dashboard. After setting it, a manual CLI deploy has to run from the repo root (with `.vercel/project.json` linked there to the right project id), not from inside the subfolder anymore (2026-11-06).
 - Each team can win only **one** Arkiv track prize (Mirror vs. Build on Arkiv) — Shankh is submitting Build on Arkiv (`shankh.report`/`shankh.request`); the OSV mirror can still be built but isn't the prize target. See `docs/decisions.md` ADR 0001.
 
 ## Layout
