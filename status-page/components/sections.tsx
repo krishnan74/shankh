@@ -167,7 +167,7 @@ export function StatusClose() {
       <Card tone="inverted" roomy className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
         <div className="flex flex-col gap-10">
           <div className="flex flex-col gap-4">
-            <p className="label text-xs text-accent">04 · Where it stands</p>
+            <p className="label text-xs text-accent">05 · Where it stands</p>
             <p className="font-display text-4xl leading-[1.02] font-black tracking-[-0.02em] sm:text-5xl">One catches it. Everyone is saved.</p>
             <p className="text-lg text-balance text-background/70">What you just saw is real. Here&rsquo;s what&rsquo;s live, and what&rsquo;s next.</p>
           </div>
@@ -226,42 +226,6 @@ export function Stepper() {
         </li>
       ))}
     </ol>
-  );
-}
-
-export function TrackColumns({ pypiRegistry, killSwitch }: { pypiRegistry: string | null; killSwitch: string | null }) {
-  const etherscan = (a: string) => `https://sepolia.etherscan.io/address/${a}`;
-  const cols = [
-    {
-      name: "ENS — Best Use of ENSv2",
-      body: "ENSv2's permissions are the security guarantee: an emancipated registry we can't seize, and per-key resolver roles splitting the maintainer's shankh.source from KillSwitch's shankh.revoked.",
-      link: pypiRegistry ? { href: etherscan(pypiRegistry), label: "pypi.shankh.eth on Etherscan ↗" } : null,
-    },
-    {
-      name: "Ethereum Foundation — CROPS",
-      body: "Clients read ENS directly; `shankh verify` keeps working with this page and any backend switched off.",
-      link: killSwitch ? { href: etherscan(killSwitch), label: "KillSwitch on Etherscan ↗" } : null,
-    },
-    {
-      name: "Arkiv — Build on Arkiv",
-      body: "shankh.report is the shared, signed alarm: one machine's finding becomes evidence every other machine can check.",
-      link: { href: "#ledger", label: "Reports in the ledger →" },
-    },
-  ];
-  return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      {cols.map((c) => (
-        <div key={c.name} className="flex flex-col gap-2">
-          <p className="font-medium text-foreground">{c.name}</p>
-          <p>{c.body}</p>
-          {c.link && (
-            <a href={c.link.href} className="text-xs underline underline-offset-2 hover:text-accent">
-              {c.link.label}
-            </a>
-          )}
-        </div>
-      ))}
-    </div>
   );
 }
 

@@ -44,7 +44,15 @@ About three minutes, conversational. It follows the landing page (https://status
 
 *(Press `j`.)*
 
-## 3. Why the alarm can't be silenced — section 03
+## 3. Three partners — section 03
+
+*(On screen: "Three partners, three jobs." and three cards side by side.)*
+
+> "Shankh leans on three partners, each doing one job. Arkiv carries the evidence between machines. Open Ethereum networks mean there's no Shankh server in the middle. And ENS — the one I want to show you properly — holds the switch."
+
+*(Point at the ENS card's chip, *Name space locked · read just now*, then press `j`.)*
+
+## 4. Why the alarm can't be silenced — section 04
 
 *(On screen: "The alarm lives on ENS, where the attacker — and even we — can't touch it.")*
 
@@ -72,7 +80,7 @@ About three minutes, conversational. It follows the landing page (https://status
 
 *(Press `j`.)*
 
-## 4. Where it stands — section 04
+## 5. Where it stands — section 05
 
 *(On screen, the dark panel: "One catches it. Everyone is saved.")*
 
@@ -82,7 +90,7 @@ About three minutes, conversational. It follows the landing page (https://status
 
 > "Live today: catching the package, posting the alarm, the maintainer's kill switch on ENS, and a name space we provably can't take back. Next: switching the AWS keys off automatically, and a watcher so nobody has to type a command."
 
-## 5. The ask
+## 6. The ask
 
 > "One thing we'd really value your take on: how should a maintainer prove they own a PyPI package before we hand them their ENS name?"
 

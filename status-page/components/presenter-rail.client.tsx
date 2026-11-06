@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * A fixed rail listing the page's four parts: numbers from 1280px, the active part's name from
+ * A fixed rail listing the page's five parts: numbers from 1280px, the active part's name from
  * 1600px -- below those widths the page's left margin is too narrow and it would sit on the
  * content. The current part highlights in teal as you scroll, each one is a jump link, and j/k
  * step between parts. The in-flow section labels carry the same numbering when it's hidden.
@@ -11,8 +11,9 @@ import { useEffect, useRef, useState } from "react";
 const BEATS = [
   { id: "beat-incident", n: "01", label: "What happened" },
   { id: "beat-solution", n: "02", label: "What Shankh does" },
-  { id: "beat-ens", n: "03", label: "Why it can't be silenced" },
-  { id: "beat-status", n: "04", label: "Where it stands" },
+  { id: "beat-partners", n: "03", label: "Three partners" },
+  { id: "beat-ens", n: "04", label: "Why it can't be silenced" },
+  { id: "beat-status", n: "05", label: "Where it stands" },
 ];
 
 export function PresenterRail() {

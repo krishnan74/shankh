@@ -12,7 +12,8 @@ import { LedgerTable } from "@/components/ledger-table";
 import { PresenterRail } from "@/components/presenter-rail.client";
 import { ReportFeed } from "@/components/report-feed";
 import { Reveal } from "@/components/reveal";
-import { Hero, Incident, SiteFooter, SolutionSteps, StatusClose, Stepper, TrackColumns } from "@/components/sections";
+import { Partners } from "@/components/partners";
+import { Hero, Incident, SiteFooter, SolutionSteps, StatusClose, Stepper } from "@/components/sections";
 import { Terminal } from "@/components/terminal.client";
 import { TopBar } from "@/components/topbar";
 import { Band, Detail, SectionHeader } from "@/components/ui";
@@ -94,19 +95,30 @@ export default async function Home() {
           </div>
         </Band>
 
-        {/* 03 -- why the alarm can't be silenced: ENS */}
+        {/* 03 -- the three partner prizes, side by side and equally weighted */}
         <Band alt>
           <SectionHeader
+            id="beat-partners"
+            kicker="03 · Built on three partners"
+            headline="Three partners, three jobs."
+            lede="ENS holds the switch. Arkiv carries the evidence. And open Ethereum networks mean there's no one in the middle."
+          />
+          <Partners pypiRegistry={pypiRegistry} reportCount={reports?.length ?? null} blockNumber={block?.blockNumber ?? null} />
+        </Band>
+
+        {/* 04 -- why the alarm can't be silenced: ENS, up close */}
+        <Band>
+          <SectionHeader
             id="beat-ens"
-            kicker="03 · Why the alarm can't be silenced"
+            kicker="04 · Why the alarm can't be silenced"
             headline="The alarm lives on ENS, where the attacker — and even we — can't touch it."
             lede="Someone who steals a maintainer's PyPI or GitHub login can publish bad code. They still can't change what's on ENS, because that's controlled by a separate wallet."
           />
           <EnsStory pypiRegistry={pypiRegistry} packageEns={packageEns} proofs={proofs} />
         </Band>
 
-        {/* 04 -- where it stands */}
-        <Band>
+        {/* 05 -- where it stands */}
+        <Band alt>
           {/* The closing panel carries its own label and one headline -- a separate SectionHeader
               here stacked two big headlines on top of each other. */}
           <div id="beat-status" className="scroll-mt-24">
@@ -115,7 +127,7 @@ export default async function Home() {
         </Band>
 
         {/* Progressive disclosure: everything a technical reviewer wants, none of it in the way. */}
-        <Band alt>
+        <Band>
           <div id="ledger" className="scroll-mt-24">
             <SectionHeader kicker="More detail" headline="For the technically curious." />
           </div>
@@ -134,10 +146,7 @@ export default async function Home() {
                 />
               </Reveal>
             </Detail>
-            <Detail summary="03 · Partner track alignment">
-              <TrackColumns pypiRegistry={pypiRegistry?.address ?? null} killSwitch={killSwitch?.address ?? null} />
-            </Detail>
-            <Detail summary="04 · Full on-chain ledger">
+            <Detail summary="03 · Full on-chain ledger">
               <LedgerTable
                 shankhRegistry={shankhRegistry}
                 pypiRegistry={pypiRegistry}
@@ -149,7 +158,7 @@ export default async function Home() {
           </div>
         </Band>
 
-        <div className="border-t border-border bg-background">
+        <div className="border-t border-border bg-surface">
           <div className="mx-auto w-full max-w-6xl px-6 sm:px-10">
             <SiteFooter />
           </div>
