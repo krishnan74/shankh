@@ -7,7 +7,8 @@
     "import-osv": "tsx src/import-osv.ts",
     "write-report": "tsx src/write-report-cli.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test src/*.test.ts"
+    "test": "node --import tsx --test src/*.test.ts",
+    "read-reports": "tsx src/read-reports-cli.ts"
   },
   "keywords": [],
   "author": "",

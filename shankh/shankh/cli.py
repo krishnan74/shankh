@@ -1,5 +1,6 @@
 """shankh CLI — `shankh verify`, `shankh scan`, `shankh fingerprint` (and stubs for `demo`, `report`)."""
 
+from concurrent.futures import ThreadPoolExecutor
 from importlib.metadata import PackageNotFoundError
 from pathlib import Path
 
@@ -8,9 +9,10 @@ import typer
 
 from shankh import ens
 from shankh import scan as scan_mod
+from shankh import trust as trust_mod
 from shankh import verify as verify_mod
 from shankh.inventory import build_fingerprint, installed_package
-from shankh.report import ReportWriteError, write_report
+from shankh.report import ReportReadError, ReportWriteError, read_reports, write_report
 from shankh.verify import RiskTier, VerifyResult
 
 app = typer.Typer(name="shankh", help="Verify packages against their public source; kill reachable credentials on proof of compromise.")
@@ -71,22 +73,46 @@ def verify(
 def scan(
     site_packages: str = typer.Option(None, "--site-packages", help=SITE_PACKAGES_HELP),
     report: bool = typer.Option(True, "--report/--no-report", help="Write each compromised build to Arkiv as a shankh.report entity."),
+    trust: list[str] = typer.Option(  # noqa: B008 -- typer reads its options from defaults
+        None, "--trust",
+        help="Also act on Arkiv alarms signed by this reporter (<name>.reporters.shankh.eth). Repeatable; adds to ~/.config/shankh/trust.toml.",
+    ),
+    index_url: str = typer.Option(None, "--index-url", help="Where to fetch published source when re-checking an Arkiv alarm (defaults to PyPI)."),
+    find_links: str = typer.Option(None, "--find-links", help="Local directory of published archives for re-checks instead of any index."),
 ) -> None:
-    """Check every installed package against every maintainer's ENS kill switch under pypi.shankh.eth."""
+    """Check every installed package against every maintainer's ENS kill switch under pypi.shankh.eth,
+    and against recent Arkiv alarms from reporters you trust -- each re-checked here before it counts."""
     if not ens.is_configured():
         typer.echo("ENS isn't configured: set PYPI_REGISTRY_ADDRESS and SEPOLIA_RPC_URL.")
         raise typer.Exit(code=1)
+    packages_path = _site_packages(site_packages)
+    names = trust_mod.trusted_names(trust)
+    # The ENS sweep and the trusted-reporter lookup are independent chain reads -- run them together.
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sweeping = pool.submit(ens.sweep)
+        resolving = pool.submit(trust_mod.resolve, names)
+        try:
+            swept = sweeping.result()
+            reporters, missing = resolving.result()
+        except ens.EnsCheckError as exc:
+            typer.echo(f"could not read ENS: {exc}")
+            raise typer.Exit(code=1)
+    for name in missing:
+        typer.echo(f"warning: {name} isn't registered on ENS -- ignoring it.")
+
+    def recheck(package: str, version: str) -> VerifyResult:
+        return verify_mod.verify(package, version, index_url=index_url, find_links=find_links, site_packages=packages_path)
+
     try:
-        result = scan_mod.scan(_site_packages(site_packages))
-    except ens.EnsCheckError as exc:
-        typer.echo(f"could not read ENS: {exc}")
+        result = scan_mod.scan(packages_path, reporters=reporters, read_reports=read_reports, recheck=recheck, swept=swept)
+    except ReportReadError as exc:
+        typer.echo(f"could not read Arkiv: {exc}")
         raise typer.Exit(code=1)
 
     typer.echo(f"pypi.shankh.eth: {len(result.registry_packages)} packages, {result.flagged_builds} flagged build(s)")
     typer.echo(f"this machine:    {result.installed_count} installed, {len(result.covered)} with an ENS kill switch")
     if not result.hits:
-        typer.echo("no installed build has been flagged by its maintainer.")
-        return
+        typer.echo("ens:             no installed build has been flagged by its maintainer.")
     for hit in result.hits:
         typer.echo(f"  COMPROMISED  {hit.package}=={hit.version}  flagged on {hit.ens_name}")
         typer.echo(f"               build {hit.fingerprint}")
@@ -100,7 +126,23 @@ def scan(
                 typer.echo(f"               reported to Arkiv: {written['entityKey']} (tx {written['txHash']})")
             except ReportWriteError as exc:
                 typer.echo(f"               could not write to Arkiv (continuing): {exc}")
-    raise typer.Exit(code=2)
+    if reporters:
+        trusted = ", ".join(r.name for r in reporters)
+        typer.echo(f"arkiv:           {result.arkiv_reports_read} recent report(s) from {trusted}; {len(result.arkiv_alarms)} about a build installed here")
+    for alarm in result.arkiv_alarms:
+        label = {"confirmed": "COMPROMISED", "not-confirmed": "not confirmed", "could-not-recheck": "UNVERIFIED"}[alarm.outcome]
+        typer.echo(f"  {label:<12} {alarm.package}=={alarm.version}  alarm from {alarm.reporter}, re-checked here")
+        typer.echo(f"               {alarm.detail}")
+        typer.echo(f"               alarm entity {alarm.report_key}")
+        if alarm.outcome == "confirmed" and report and alarm.recheck is not None:
+            # This machine's own, independent confirmation -- a second witness for everyone else.
+            try:
+                written = write_report(alarm.recheck)
+                typer.echo(f"               confirmation reported to Arkiv: {written['entityKey']} (tx {written['txHash']})")
+            except ReportWriteError as exc:
+                typer.echo(f"               could not write to Arkiv (continuing): {exc}")
+    if result.compromised:
+        raise typer.Exit(code=2)
 
 
 @app.command()

@@ -6,8 +6,8 @@
  */
 import { ExpirationTime } from "@arkiv-network/sdk";
 import { addr, bool, bytes, str } from "@arkiv-network/sdk/schema";
-import { and, eq } from "@arkiv-network/sdk/query";
-import { hexToString, stringToHex } from "viem";
+import { and, desc, eq } from "@arkiv-network/sdk/query";
+import { hexToString, stringToHex, type Hex } from "viem";
 
 import { arkivPublicClient, arkivWalletClient } from "./client.ts";
 import { ShankhReport } from "./schema.ts";
@@ -58,4 +58,58 @@ export async function findExistingReport(pkg: string, version: string) {
   const entity = page.entities[0];
   if (!entity) return null;
   return { ...entity, findings: JSON.parse(hexToString(entity.findings.value)) as VerificationFinding[] };
+}
+
+export type SignedReport = VerificationReport & {
+  key: string;
+  /** The wallet that actually signed the entity -- recorded by Arkiv itself, so it can't be faked. */
+  creator: string;
+};
+
+/**
+ * The most recent shankh.report entities signed by one wallet, newest first.
+ *
+ * Filters on `$creator` (via `createdBy`), never on the `reporter` attribute: anyone can write any
+ * value into an attribute, but the creator is whoever signed the entity. And it never filters by
+ * package -- the caller matches reports against what's installed locally, so the query reveals
+ * nothing about this machine. Every report gets the same lifetime, so sorting by expiry descending
+ * is newest-written first.
+ *
+ * Two queries, as in status-page/lib/arkiv.ts: selecting artifactSha256/ensRevoked would make
+ * Arkiv return only entities that have them, silently dropping older reports.
+ */
+export async function recentReportsBy(creator: Hex, limit = 50): Promise<SignedReport[]> {
+  const client = arkivPublicClient();
+  const [page, extras] = await Promise.all([
+    client
+      .select({ $key: true, $creator: true, package: true, version: true, tier: true, malicious: true, findings: true })
+      .from(ShankhReport)
+      .createdBy(creator)
+      .orderBy(desc("$expiresAt"))
+      .limit(limit)
+      .fetch(),
+    client
+      .select({ $key: true, artifactSha256: true, ensRevoked: true })
+      .from(ShankhReport)
+      .createdBy(creator)
+      .orderBy(desc("$expiresAt"))
+      .limit(limit)
+      .fetch()
+      .catch(() => null),
+  ]);
+  const extraByKey = new Map((extras?.entities ?? []).map((e) => [e.$key, e]));
+  return page.entities.map((e) => {
+    const extra = extraByKey.get(e.$key);
+    return {
+      key: e.$key,
+      creator: e.$creator,
+      package: e.package.value,
+      version: e.version.value,
+      tier: e.tier.value,
+      malicious: e.malicious.value,
+      findings: JSON.parse(hexToString(e.findings.value)) as VerificationFinding[],
+      artifactSha256: extra?.artifactSha256.value ?? "",
+      ensRevoked: extra?.ensRevoked.value ?? false,
+    };
+  });
 }

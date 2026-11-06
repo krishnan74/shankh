@@ -22,4 +22,14 @@ First-hand only. Evidence per item. What worked as well as what didn't.
 **Evidence:** same live testnet, same schema name: `.select({ $key, package })` returns 3 entities; adding `artifactSha256: true, ensRevoked: true` to the select returns 0. Fixed in `status-page/lib/arkiv.ts` by querying base columns for everything and merging the new columns from a second query by `$key`.
 **Suggestion:** Either return missing attributes as absent/undefined on the rows that lack them (the behavior a `select` reads as), or document prominently that selecting an attribute acts as an existence filter — and ideally say so in the schema-evolution docs, since adding a column to a live schema is exactly when this bites.
 
+## 5. `createdBy` made a trust model possible without any extra infrastructure
+**What happened:** We needed "only act on reports from reporters I trust." The `reporter` attribute we write is just data -- anyone can put anyone's address in it. Filtering on the chain-recorded creator (`.createdBy(addr)`, `$creator`) gave us a signer we can rely on, and pairing it with an ENS name that publishes the reporter's wallet gave a full trust list with no server of our own.
+**Evidence:** `arkiv/src/report.ts` `recentReportsBy`; `shankh/tests/test_scan.py` proves a report whose `reporter` attribute claims a trusted wallet but was created by another is ignored; live run in docs/evidence.md (entity `0xe7d2102e…`).
+**Suggestion:** Say plainly in the docs that `$creator` is the field to trust and attributes are not -- it's the first question anyone building on shared data will have, and the answer is good.
+
+## 6. "Most recent" needs a workaround, and a read can stall for minutes
+**What happened:** We wanted each trusted reporter's newest reports. `$createdAt` can be selected but not used to filter or sort, so we sort by `$expiresAt` descending, which only means "newest" because every report we write gets the same lifetime. Separately, one `read-reports` call against the testnet hung with no response until we killed it after several minutes; the same query answered in 2s moments later. The SDK call has no timeout of its own, so the caller hangs too.
+**Evidence:** `arkiv/src/report.ts` (`orderBy(desc("$expiresAt"))` with the comment explaining why); `shankh/shankh/report/__init__.py` now wraps the read in a 60s timeout after the hang during the live demo run (docs/build-log.md, 2026-11-06).
+**Suggestion:** Allow ordering and range filters on `$createdAt` (or a block number), and give query calls a default timeout or an `AbortSignal` option so one stalled RPC can't hang a client.
+
 Still open: expiry ceiling, query performance/syntax at scale (docs/plan.md spike 3's remaining unknowns).

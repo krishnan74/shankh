@@ -29,15 +29,16 @@ vercel --version
 ```bash
 # shankh/ (Python watcher + CLI)
 cd shankh && source .venv/bin/activate
-pytest                    # 28 tests: inventory/fingerprint/verify/ens/scan/report units + one live check against real PyPI
+pytest                    # 34 tests: inventory/fingerprint/verify/ens/scan/trust/report units + one live check against real PyPI
 ruff check .              # lint
 shankh verify <pkg>==<version>                    # real PyPI by default, auto-reports to Arkiv
 shankh verify <pkg>==<version> --find-links <dir> # against a local replay index instead
 shankh verify <pkg>==<version> --no-report        # skip the Arkiv write
 shankh scan                                       # check every installed package against every ENS kill switch under pypi.shankh.eth
 shankh scan --site-packages <dir>                 # ...a specific environment's packages instead
+shankh scan --trust <name>.reporters.shankh.eth    # also act on that reporter's Arkiv alarms, each re-checked locally (or list them in ~/.config/shankh/trust.toml)
 shankh fingerprint <pkg>                          # the installed build's fingerprint -- what a maintainer flags via KillSwitch.revoke()
-# ENS reads need PYPI_REGISTRY_ADDRESS and SEPOLIA_RPC_URL exported.
+# ENS reads need PYPI_REGISTRY_ADDRESS and SEPOLIA_RPC_URL exported; --trust also needs ENS_REGISTRY_ADDRESS (shankh.eth's registry).
 
 # contracts/ (Foundry) — lib/ is gitignored, fetch it after a fresh clone
 cd contracts
@@ -64,7 +65,10 @@ scripts/demo.sh            # dry run (--recap) by default; --write to run the re
 scripts/evidence.sh        # dry run by default; --write to regenerate docs/evidence.md
 scripts/demo-ens.sh prepare   # fresh, unflagged poisoned demo build in .demo/ (inert; never starts its Python)
 scripts/demo-ens.sh run       # live: scan (clean) -> maintainer flags it on Sepolia -> scan (COMPROMISED, alarm to Arkiv)
+scripts/demo-arkiv.sh prepare # fresh poisoned build installed on two throwaway "machines" in .demo-arkiv/
+scripts/demo-arkiv.sh run     # live: B scans (clean) -> A rebuilds it, posts CRITICAL to Arkiv -> B reads the trusted alarm, re-checks, COMPROMISED
 scripts/ens/add-package-sepolia.sh <label>   # register another package under pypi.shankh.eth with its own resolver + KillSwitch
+scripts/ens/add-reporter-sepolia.sh <label> <signer>   # give a reporter an ENS identity under reporters.shankh.eth (shankh.signer, writable only by them)
 ```
 
 ## Environment
@@ -82,6 +86,7 @@ scripts/ens/add-package-sepolia.sh <label>   # register another package under py
 | `KillSwitch` (Sepolia) | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, maintainer confirmed on-chain |
 | `shankh.report` (Arkiv testnet) | writer live — real entity `0x8110825324441ccf57ece02ced20ac72ff1de16e8eb56630e3c0b47fc3732ebf`, write tx `0x63442b3e069937b38284504655cf6d78d1c55fd10c8e4eaa5246ec6a3e87b1a1` |
 | `shankh.eth` → `pypi.shankh.eth` → `shankh-demo.pypi.shankh.eth` | **live on Sepolia** — `0xb95110b3...` / `0x8634b9f5...` (emancipated) / `0xe2f5e5dc...` resolver; per-package `KillSwitch` at `0x1126b7aB...` has already revoked a demo artifact for real — see docs/evidence.md |
+| `reporters.shankh.eth` → `shankh-team.reporters.shankh.eth` | **live on Sepolia** — registry `0x9b833a13...` (emancipated), resolver `0xb6bc8cb1...`, `shankh.signer` = the operator wallet. `shankh scan --trust shankh-team.reporters.shankh.eth` acts on that wallet's Arkiv alarms, proven live by `scripts/demo-arkiv.sh` — see docs/evidence.md |
 | Status page | https://status-page-plum-nine.vercel.app — reads live `KillSwitch` state (Sepolia, now the real per-package contract), the live ENS tree's `shankh.source`/`shankh.revoked` text records, and real `shankh.report` entities (Arkiv testnet), server-side, per request, confirmed via a real `curl` against the production URL. `KILLSWITCH_ADDRESS`/`PACKAGE_RESOLVER_ADDRESS`/`PACKAGE_DNS_ENCODED_NAME`/`SEPOLIA_RPC_URL`/`ARKIV_RPC_URL` set as Vercel prod env vars; `ARKIV_ACCESS_KEY` still needs adding manually (not secret, but blocked from shell automation — add via `vercel env add ARKIV_ACCESS_KEY production` or the dashboard). Vercel project's Root Directory is now correctly set to `status-page` — GitHub auto-deploy on push to `main` had actually been failing silently until 2026-11-06; manual deploys now run `vercel deploy --prod --yes --cwd .` from the repo root, not from inside `status-page/`. |
 
 ## Facts learned the hard way
@@ -109,4 +114,4 @@ plan-2.md, project-overview.md   Original unedited inputs — provenance only, s
 
 ## Status
 
-The real ENS tree is live on Sepolia (`shankh.eth` → `pypi.shankh.eth`, emancipated → `shankh-demo.pypi.shankh.eth`, split resolver grants, per-package `KillSwitch`) — rehearsed on an Anvil fork first, which caught a real role-bitmap bug before touching real Sepolia. `shankh verify` is a real, working rebuild verifier that auto-reports to Arkiv on every run — the full "verify a package, alarm lands on Arkiv" loop has run end to end against a real malicious wheel and a real entity. **The ENS tree, the verifier, and the status page are now wired together**: `shankh/shankh/ens/` reads the maintainer's on-chain revocation (kill signal #2) and folds it into `verify()`'s result, which travels to the Arkiv report, which the status page re-reads live alongside a direct live read of the same ENS text records (`status-page/lib/ens.ts`) — the whole chain from CLI to public page is real data, no mocks, no build-time freeze, and no longer three separately-proven pieces. Everything else functional (watcher daemon loop, AWS kill sequence, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline). Before pitching to partner judges, read `docs/pitch-study-guide.md` first.
+The real ENS tree is live on Sepolia (`shankh.eth` → `pypi.shankh.eth`, emancipated → `shankh-demo.pypi.shankh.eth`, split resolver grants, per-package `KillSwitch`) — rehearsed on an Anvil fork first, which caught a real role-bitmap bug before touching real Sepolia. `shankh verify` is a real, working rebuild verifier that auto-reports to Arkiv on every run — the full "verify a package, alarm lands on Arkiv" loop has run end to end against a real malicious wheel and a real entity. **The ENS tree, the verifier, and the status page are now wired together**: `shankh/shankh/ens/` reads the maintainer's on-chain revocation (kill signal #2) and folds it into `verify()`'s result, which travels to the Arkiv report, which the status page re-reads live alongside a direct live read of the same ENS text records (`status-page/lib/ens.ts`) — the whole chain from CLI to public page is real data, no mocks, no build-time freeze, and no longer three separately-proven pieces. The Arkiv side now closes the loop too: `shankh scan --trust` reads recent alarms from reporters named on ENS (`<name>.reporters.shankh.eth`), keeps only those signed by that reporter's wallet and about a build installed here, and re-checks each locally before calling it compromised — proven live across two throwaway environments. Everything else functional (watcher daemon loop, AWS kill sequence, `shankh.request` writer) is still a stub — see `docs/plan.md`'s Status table for the authoritative list, and `docs/plan.md`'s Open section for what's still blocking (an AWS sandbox account; the actual submission deadline). Before pitching to partner judges, read `docs/pitch-study-guide.md` first.

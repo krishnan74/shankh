@@ -20,6 +20,7 @@ import json
 import os
 import re
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 
 REVOKED_KEY = "shankh.revoked"
 PARENT = "pypi.shankh.eth"
@@ -58,29 +59,34 @@ def dns_encode(name: str) -> str:
     return "0x" + (out + b"\x00").hex()
 
 
-def resolver_for(label: str) -> str | None:
-    """The package's resolver address according to pypi.shankh.eth's registry, or None if unregistered."""
-    registry, rpc_url = _config()
+def resolver_for(label: str, registry: str | None = None) -> str | None:
+    """`label`'s resolver according to a registry (pypi.shankh.eth's by default), or None if unregistered."""
+    rpc_url = os.environ["SEPOLIA_RPC_URL"]
+    registry = registry or os.environ["PYPI_REGISTRY_ADDRESS"]
     try:
         address = _cast("call", registry, "getResolver(string)(address)", label, "--rpc-url", rpc_url)
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        raise EnsCheckError(f"could not look up the resolver for {label}.{PARENT}: {exc}") from exc
+        raise EnsCheckError(f"could not look up the resolver for {label}: {exc}") from exc
     address = address.strip()
     return None if address.lower() == ZERO_ADDRESS else address
 
 
-def revoked_for(label: str, resolver: str) -> set[str]:
-    """The lowercase 0x-hex build fingerprints flagged in `label`'s shankh.revoked record."""
-    _, rpc_url = _config()
-    fqdn = f"{label}.{PARENT}"
+def read_text(resolver: str, fqdn: str, key: str) -> str:
+    """One text record, read through ENSIP-10 resolve() (a direct text() call reverts on these resolvers)."""
+    rpc_url = os.environ["SEPOLIA_RPC_URL"]
     try:
         node = _cast("namehash", fqdn)
-        inner = _cast("calldata", "text(bytes32,string)", node, REVOKED_KEY)
+        inner = _cast("calldata", "text(bytes32,string)", node, key)
         raw = _cast("call", resolver, "resolve(bytes,bytes)(bytes)", dns_encode(fqdn), inner, "--rpc-url", rpc_url)
         decoded = _cast("abi-decode", "f()(string)", raw)
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        raise EnsCheckError(f"could not read {REVOKED_KEY} for {fqdn}: {exc}") from exc
-    value = decoded.strip().strip('"')
+        raise EnsCheckError(f"could not read {key} for {fqdn}: {exc}") from exc
+    return decoded.strip().strip('"')
+
+
+def revoked_for(label: str, resolver: str) -> set[str]:
+    """The lowercase 0x-hex build fingerprints flagged in `label`'s shankh.revoked record."""
+    value = read_text(resolver, f"{label}.{PARENT}", REVOKED_KEY)
     return {h.strip().lower() for h in value.split(",") if h.strip()}
 
 
@@ -117,12 +123,49 @@ def sweep() -> dict[str, set[str]]:
     """
     if not is_configured():
         raise EnsCheckError("ENS isn't configured: set PYPI_REGISTRY_ADDRESS and SEPOLIA_RPC_URL")
-    result: dict[str, set[str]] = {}
-    for label in registry_packages():
+
+    def read(label: str) -> tuple[str, set[str] | None]:
         resolver = resolver_for(label)
-        if resolver:
-            result[label] = revoked_for(label, resolver)
-    return result
+        return label, revoked_for(label, resolver) if resolver else None
+
+    # Each package is two RPC round trips; on a slow public endpoint (5-8s a call has been measured)
+    # reading them one by one makes the sweep grow linearly with the registry, so read in parallel.
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        reads = list(pool.map(read, registry_packages()))
+    return {label: flagged for label, flagged in reads if flagged is not None}
+
+
+REPORTERS_PARENT = "reporters.shankh.eth"
+SIGNER_KEY = "shankh.signer"
+
+
+def signer_for(reporter_name: str) -> str | None:
+    """The wallet a reporter signs Arkiv reports with, from `<label>.reporters.shankh.eth`'s
+    `shankh.signer` record -- writable only by that reporter. None if the name isn't registered.
+
+    reporters.shankh.eth's registry is found through shankh.eth's own registry
+    (`getSubregistry("reporters")`), so no extra address has to be configured.
+    """
+    suffix = "." + REPORTERS_PARENT
+    if not reporter_name.endswith(suffix) or reporter_name.count(".") != REPORTERS_PARENT.count(".") + 1:
+        raise EnsCheckError(f"reporter names look like <name>.{REPORTERS_PARENT}, got {reporter_name!r}")
+    label = reporter_name.removesuffix(suffix)
+    shankh_registry = os.environ.get("ENS_REGISTRY_ADDRESS")
+    if not shankh_registry or not os.environ.get("SEPOLIA_RPC_URL"):
+        raise EnsCheckError("set ENS_REGISTRY_ADDRESS (shankh.eth's registry) and SEPOLIA_RPC_URL to look up reporters")
+    try:
+        reporters_registry = _cast(
+            "call", shankh_registry, "getSubregistry(string)(address)", "reporters", "--rpc-url", os.environ["SEPOLIA_RPC_URL"]
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        raise EnsCheckError(f"could not find {REPORTERS_PARENT}: {exc}") from exc
+    if reporters_registry.lower() == ZERO_ADDRESS:
+        return None
+    resolver = resolver_for(label, registry=reporters_registry)
+    if resolver is None:
+        return None
+    signer = read_text(resolver, reporter_name, SIGNER_KEY)
+    return signer if re.fullmatch(r"0x[0-9a-fA-F]{40}", signer) else None
 
 
 def _config() -> tuple[str, str]:

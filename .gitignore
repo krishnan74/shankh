@@ -5,3 +5,4 @@ arkiv/node_modules/
 arkiv/dist/
 .vercel
 .demo/
+.demo-arkiv/
