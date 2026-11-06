@@ -23,6 +23,7 @@ export function Card({
   children,
   className = "",
   tone = "surface",
+  roomy = false,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -30,9 +31,26 @@ export function Card({
    * -- a separate prop, not a conflicting bg-* override, so Tailwind's utility-collision rule
    * (stylesheet order, not className order, picks the winner) can't silently undo it. */
   tone?: "surface" | "inverted";
+  /** Bigger padding for hero-scale panels -- a prop, not a className override, for the same
+   * utility-collision reason as `tone`. */
+  roomy?: boolean;
 }) {
   const toneClass = tone === "inverted" ? "tone-inverted border-accent/40 bg-foreground text-background" : "border-border bg-surface";
-  return <div className={`rounded-xl border p-5 ${toneClass} ${className}`}>{children}</div>;
+  const padClass = roomy ? "p-8 sm:p-12 lg:p-16" : "p-6 sm:p-7";
+  return <div className={`rounded-2xl border ${padClass} ${toneClass} ${className}`}>{children}</div>;
+}
+
+/**
+ * One full-width section of the story. Bands alternate between the page background and the
+ * white surface, separated by a hairline, so each part of the pitch reads as its own page --
+ * with generous vertical room so nothing feels crowded.
+ */
+export function Band({ children, alt = false, className = "" }: { children: React.ReactNode; alt?: boolean; className?: string }) {
+  return (
+    <section className={`border-t border-border ${alt ? "bg-surface" : "bg-background"} ${className}`}>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-14 px-6 py-24 sm:px-10 sm:py-32">{children}</div>
+    </section>
+  );
 }
 
 /**
@@ -53,13 +71,13 @@ export function SectionHeader({
   id?: string;
 }) {
   return (
-    <div id={id} className="grid grid-cols-12 gap-x-6 scroll-mt-24">
-      <div className="col-span-12 sm:col-span-3">
+    <div id={id} className="mx-auto grid w-full max-w-3xl scroll-mt-24 grid-cols-12 gap-x-6 gap-y-4">
+      <div className="col-span-12 sm:col-span-3 sm:pt-2">
         <Eyebrow>{kicker}</Eyebrow>
       </div>
-      <div className="col-span-12 flex flex-col gap-3 sm:col-span-9">
-        <h2 className="font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">{headline}</h2>
-        {lede && <p className="max-w-xl text-text-secondary leading-relaxed">{lede}</p>}
+      <div className="col-span-12 flex flex-col gap-5 sm:col-span-9">
+        <h2 className="font-display text-3xl leading-[1.1] font-bold tracking-tight text-balance sm:text-4xl">{headline}</h2>
+        {lede && <p className="max-w-xl text-lg leading-relaxed text-text-secondary">{lede}</p>}
       </div>
     </div>
   );

@@ -1,45 +1,45 @@
 /**
- * The static narrative of the page, organized around status-page/DESIGN.md's two visual ideas
- * ("the key that dies", "the conch ripple") and the 3-minute script's five beats. Anything that
- * needs live data receives it as props from app/page.tsx (the only place that fetches); nothing
- * here invents a value. Where the brief asked for a claim the system can't yet back (an install
- * gate, a measured kill time, an unsourced statistic), the copy says what's actually true instead.
+ * The page's story, in the same order as the pitch: what happened (the incident) -> what Shankh
+ * does (the solution) -> why the alarm can't be silenced (ENS) -> where it stands. Plain language
+ * first; technical evidence (raw errors, addresses, hashes) sits one click away so a first-time
+ * visitor can follow the page in one scroll. Anything live arrives as props from app/page.tsx --
+ * nothing here invents a value, and nothing claims an unbuilt step as working.
  */
 import type { Report } from "@/lib/arkiv";
 import { ConchRipple, nodeField } from "./conch-ripple";
 import { KeyCard } from "./key-card";
+import { RaceTimeline } from "./race-timeline";
 import { Reveal } from "./reveal";
-import { Card, Eyebrow } from "./ui";
+import { Card, Eyebrow, SectionHeader } from "./ui";
 
 export function Hero({
   latestReport,
   reportCount,
   revokedCount,
-  killSwitchAddress,
+  emancipated,
 }: {
   latestReport: Report | null;
   reportCount: number | null;
   revokedCount: number | null;
-  killSwitchAddress: string | null;
+  emancipated: boolean | null;
 }) {
-  const short = (v: string) => `${v.slice(0, 6)}…${v.slice(-4)}`;
   return (
-    <header className="flex flex-col gap-10 pt-6 pb-2 sm:pt-10">
-      <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.15fr_1fr]">
-        <div className="flex flex-col gap-6">
-          <Eyebrow>ETHGlobal Mumbai 2026 — ENS · Ethereum Foundation · Arkiv</Eyebrow>
+    <header className="flex flex-col gap-16 sm:gap-20">
+      <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-[1.15fr_1fr] lg:gap-16">
+        <div className="flex flex-col gap-7">
+          <Eyebrow>ETHGlobal Mumbai 2026</Eyebrow>
           <h1 className="font-display text-[clamp(2.5rem,5.2vw,4.25rem)] leading-[1.0] font-black tracking-[-0.02em] text-balance">
-            Credentials stolen by a hacked package <em className="font-black italic">deactivate themselves.</em>
+            Stolen keys that <em className="font-black italic">switch themselves off.</em>
           </h1>
           <p className="max-w-lg text-lg leading-relaxed text-text-secondary">
-            Shankh proves a release malicious by rebuilding it from source, and puts the alarm on ENS and Arkiv — where a compromised publisher can&rsquo;t reach it.
+            When a software package you installed turns out to be hacked, Shankh proves it and raises an alarm the attacker can&rsquo;t silence. The goal: the cloud keys it could reach get shut off before anyone uses them.
           </p>
           <div className="flex flex-wrap items-center gap-5">
             <a
-              href="#beat-proof"
+              href="#beat-incident"
               className="pulse rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-contrast transition-transform duration-300 [transition-timing-function:var(--ease)] hover:scale-[1.03]"
             >
-              See it live
+              See how it works
             </a>
             <a
               href="https://github.com/krishnan74/shankh"
@@ -56,78 +56,139 @@ export function Hero({
         </Reveal>
       </div>
 
-      {/* Proof strip: three live counts, fixed-width slots so nothing shifts when values arrive. */}
-      <div className="flex flex-wrap gap-x-6 gap-y-2 border-y border-border py-3 font-mono text-xs text-text-secondary">
+      {/* Live right now: three plain facts, each read on this request. Fixed-width slots so nothing shifts. */}
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 rounded-2xl border border-border bg-surface px-6 py-4 text-sm text-text-secondary">
+        <span className="label text-[10px] text-accent">Live right now</span>
+        <span className="min-w-[9rem]">
+          {reportCount === null ? <span className="text-text-tertiary">Arkiv unreachable</span> : <><strong className="text-foreground">{reportCount}</strong> alarm{reportCount === 1 ? "" : "s"} on Arkiv</>}
+        </span>
+        <span className="min-w-[11rem]">
+          {revokedCount === null ? <span className="text-text-tertiary">ENS unreachable</span> : <><strong className="text-foreground">{revokedCount}</strong> build{revokedCount === 1 ? "" : "s"} flagged on ENS</>}
+        </span>
         <span className="min-w-[10rem]">
-          {reportCount === null ? <span className="text-text-tertiary">Arkiv unreachable</span> : <><span className="text-foreground">{reportCount}</span> reports on Arkiv</>}
-        </span>
-        <span className="min-w-[12rem]">
-          {revokedCount === null ? <span className="text-text-tertiary">ENS unreachable</span> : <><span className="text-foreground">{revokedCount}</span> revoked hash{revokedCount === 1 ? "" : "es"} on ENS</>}
-        </span>
-        <span className="min-w-[12rem]">
-          {killSwitchAddress ? <>KillSwitch <span className="text-foreground" title={killSwitchAddress}>{short(killSwitchAddress)}</span></> : <span className="text-text-tertiary">KillSwitch unreachable</span>}
+          {emancipated === null ? (
+            <span className="text-text-tertiary">Sepolia unreachable</span>
+          ) : emancipated ? (
+            <>Namespace <strong className="text-foreground">locked</strong></>
+          ) : (
+            <span className="text-red-700 dark:text-red-400">Namespace NOT locked</span>
+          )}
         </span>
       </div>
     </header>
   );
 }
 
-/** Beat 4 -- the two real incidents as case files. Only facts in plan-2.md's verified Status
- * table: no org counts or other figures we don't have a source for. */
-export function WhyNowCases() {
-  const cases = [
+/** 01 -- the incident, told plainly, then shown as two clocks. */
+export function Incident() {
+  return (
+    <>
+      <SectionHeader
+        id="beat-incident"
+        kicker="01 · What happened"
+        headline="October 2026: a popular AI package got hacked."
+        lede={
+          <>
+            LiteLLM — used by AI apps everywhere — shipped a poisoned update. For about two hours, anyone who installed it had their cloud keys quietly copied. A stolen key was first used roughly 4.5 hours later, and nothing stopped it. <span className="text-text-secondary/80">(It had happened to the same package in March, too.)</span>
+          </>
+        }
+      />
+      <Reveal>
+        <RaceTimeline />
+      </Reveal>
+      <p className="mx-auto w-full max-w-3xl pt-4 text-center font-display text-2xl leading-snug italic text-balance sm:text-3xl">
+        Keys that leak in public get shut off in seconds. <span className="text-red-700 dark:text-red-400">Keys stolen by malware get nothing.</span>
+      </p>
+    </>
+  );
+}
+
+/** 02 -- what Shankh does, as three plain steps with an honest live/next tag on each. */
+export function SolutionSteps() {
+  const steps = [
     {
-      month: "03",
-      year: "2026",
-      title: "LiteLLM 1.82.7 / 1.82.8",
-      mechanism: "Code inside proxy_server.py (1.82.7); a litellm_init.pth startup hook (1.82.8).",
-      source: "GHSA-5mg7-485q-xm76",
+      n: "1",
+      title: "Check",
+      body: "Rebuild the package from its public source code and spot any file that shouldn't be there.",
+      live: true,
     },
     {
-      month: "10",
-      year: "2026",
-      title: "LiteLLM 1.107.0",
-      mechanism: "A .pth loader plus sitecustomize.py — auto-run on every Python start.",
-      source: "Datadog · Help Net Security · CSA",
+      n: "2",
+      title: "Raise the alarm",
+      body: "Post a signed alert to Arkiv, and let the real maintainer flag the bad build on ENS. Every other machine can read both.",
+      live: true,
+    },
+    {
+      n: "3",
+      title: "Shut the keys off",
+      body: "Switch off the cloud keys that package could reach — switched off, not deleted, so a false alarm can be undone.",
+      live: false,
     },
   ];
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid gap-4 sm:grid-cols-2">
-        {cases.map((c) => (
-          <Card key={c.title} className="flex flex-col gap-3">
-            <div className="flex items-baseline gap-2">
-              <span className="font-display text-5xl leading-none font-black">{c.month}</span>
-              <span className="label text-[10px] text-text-tertiary">/ {c.year} · historical</span>
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+      {steps.map((s, i) => (
+        <Reveal key={s.n} delayMs={i * 80}>
+          <Card className="flex h-full flex-col gap-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-display text-4xl leading-none font-black">{s.n}</span>
+              <span className={`label rounded-full border px-2 py-0.5 text-[9px] ${s.live ? "border-accent/50 text-accent" : "border-border text-text-secondary"}`}>
+                {s.live ? "Live" : "Next"}
+              </span>
             </div>
-            <p className="font-mono text-sm font-medium">{c.title}</p>
-            <p className="text-sm leading-relaxed text-text-secondary">{c.mechanism}</p>
-            <p className="label text-[9px] text-text-tertiary">source: {c.source}</p>
+            <p className="font-medium">{s.title}</p>
+            <p className="text-sm leading-relaxed text-text-secondary">{s.body}</p>
           </Card>
-        ))}
-      </div>
-      <p className="font-display text-2xl leading-snug italic sm:text-3xl">
-        Leaked keys get quarantined in seconds. <span className="text-red-700 dark:text-red-400">Stolen keys get nothing.</span>
-      </p>
+        </Reveal>
+      ))}
     </div>
   );
 }
 
-/** Beat 5 -- the tagline, the ripple reaching the field, and the honest line underneath. */
-export function HonestClose() {
+/** 04 -- where it stands: what's real today, what's next, and the conch. */
+export function StatusClose() {
+  const live = [
+    "Catches a real malicious package by rebuilding it from source",
+    "Signs the alarm onto Arkiv for every other machine",
+    "Reads the maintainer's ENS kill switch, and treats a flagged build as critical",
+    "ENS namespace we provably can't take back",
+  ];
+  const next = [
+    "Switching the AWS keys off automatically",
+    "An always-on watcher, so checks run without anyone typing a command",
+    "Acting on other people's alarms after re-checking them locally",
+  ];
   return (
     <Reveal>
-      <Card tone="inverted" className="grid grid-cols-1 items-center gap-6 p-8 sm:p-10 lg:grid-cols-[1fr_1fr]">
-        <div className="flex flex-col gap-4">
-          <p className="label text-xs text-accent">The conch</p>
-          <p className="font-display text-4xl leading-[1.02] font-black tracking-[-0.02em] sm:text-5xl">
-            One catches it. Everyone is saved.
-          </p>
-          <p className="text-sm leading-relaxed text-background/70">
-            Live today: the rebuild detection, the signed Arkiv alarm, and the on-chain revocation nobody — including us — can undo. Not yet: the AWS key deactivation itself, the always-on watcher, and the install gate that would stop an attacker who uses a key within minutes. Those are next.
-          </p>
+      <Card tone="inverted" roomy className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
+        <div className="flex flex-col gap-10">
+          <p className="font-display text-4xl leading-[1.02] font-black tracking-[-0.02em] sm:text-5xl">One catches it. Everyone is saved.</p>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+            <div>
+              <p className="label mb-3 text-[10px] text-accent">Live today</p>
+              <ul className="flex flex-col gap-2.5 text-sm text-background/80">
+                {live.map((t) => (
+                  <li key={t} className="flex gap-2">
+                    <span className="text-accent" aria-hidden="true">✓</span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="label mb-3 text-[10px] text-background/70">Next</p>
+              <ul className="flex flex-col gap-2.5 text-sm text-background/80">
+                {next.map((t) => (
+                  <li key={t} className="flex gap-2">
+                    <span className="text-background/50" aria-hidden="true">○</span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
-        <ConchRipple className="mx-auto h-64 w-64 sm:h-72 sm:w-72" rings={4} nodes={nodeField(18)} protectedNodes />
+        <ConchRipple className="mx-auto h-56 w-56 sm:h-64 sm:w-64" rings={4} nodes={nodeField(18)} protectedNodes />
       </Card>
     </Reveal>
   );
@@ -198,7 +259,7 @@ export function TrackColumns({ pypiRegistry, killSwitch }: { pypiRegistry: strin
 
 export function SiteFooter() {
   return (
-    <footer className="mt-4 flex flex-col gap-2 border-t border-border py-10 text-xs text-text-tertiary">
+    <footer className="flex flex-col gap-2 py-12 text-xs text-text-secondary">
       <p>
         Demo runs on Sepolia and the Arkiv testnet against a harmless replay of the attack. No real malware is published.
       </p>

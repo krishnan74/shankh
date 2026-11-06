@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Tailwind's dark: variant defaults to prefers-color-scheme, which would disagree with the toggle
+   (dark-mode tier pills on a light page for anyone whose OS is dark). Key it off the same
+   data-theme attribute the tokens use, so there's exactly one source of truth for the theme. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /*
  * Color system: warm near-black / near-white (never pure #000/#fff), one signature accent
  * (a conch-shell teal -- "shankh" is the conch blown to warn a village) used only on the
@@ -21,21 +26,15 @@
   --accent-inverse: #2dd4bf;
 }
 
-:root:not([data-theme="light"]) {
-  @media (prefers-color-scheme: dark) {
-    --background: #0b0d0e;
-    --foreground: #f3f2ef;
-    --surface: #131617;
-    --border: rgba(243, 242, 239, 0.1);
-    --text-secondary: rgba(243, 242, 239, 0.64);
-    --text-tertiary: rgba(243, 242, 239, 0.42);
-    --accent: #2dd4bf;
-    --accent-contrast: #06201c;
-    --accent-inverse: #0a7a6e;
-  }
+/* Light is the primary theme: the page always opens light, whatever the OS prefers. Dark is opt-in
+   via the toggle (data-theme="dark"), restored before first paint by the inline script in
+   app/layout.tsx so there's no flash. */
+:root {
+  color-scheme: light;
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --background: #0b0d0e;
   --foreground: #f3f2ef;
   --surface: #131617;

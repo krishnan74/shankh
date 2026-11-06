@@ -69,7 +69,7 @@ export function EnsTree({
   proofs: { regrant: ProofOutcome; writeRevoked: ProofOutcome } | null;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid grid-cols-1 gap-8">
       <div className="flex flex-col">
         <TreeNode name="shankh.eth" tag={<span className="label text-[9px] text-text-tertiary">registry</span>}>
           {shankhRegistry ? (

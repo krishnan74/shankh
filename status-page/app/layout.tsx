@@ -32,7 +32,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
+      // the inline script below may set data-theme before hydration
+      suppressHydrationWarning
     >
+      <head>
+        {/* Light is the default. Re-apply a visitor's saved dark choice before first paint, so a
+            returning dark-mode visitor never sees a light flash. Storage can be blocked -- then
+            the page simply stays light. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem("shankh-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         <div className="grain" aria-hidden="true" />
         {children}

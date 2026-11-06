@@ -17,16 +17,16 @@ const HOURS = 5;
 const pct = (h: number) => `${(h / HOURS) * 100}%`;
 
 const REAL = [
-  { h: 0, label: "11:39 · published", tone: "neutral" as const },
-  { h: 1 + 41 / 60, label: "13:20 · PyPI quarantine", tone: "neutral" as const },
-  { h: 2 + 41 / 60, label: "~14:20 · Docker image removed", tone: "neutral" as const },
-  { h: 4.5, label: "~4.5h · stolen key used", tone: "attack" as const },
+  { h: 0, label: "11:39 · poisoned update goes live", tone: "neutral" as const },
+  { h: 1 + 41 / 60, label: "13:20 · PyPI pulls it", tone: "neutral" as const },
+  { h: 2 + 41 / 60, label: "~14:20 · Docker image pulled", tone: "neutral" as const },
+  { h: 4.5, label: "~4.5h · a stolen key is used", tone: "attack" as const },
 ];
 
 const DESIGNED = [
-  { h: 0.08, label: "rebuild flags CRITICAL" },
-  { h: 0.16, label: "report on Arkiv" },
-  { h: 0.24, label: "kill triggered (target)" },
+  { h: 0.08, label: "caught by the rebuild" },
+  { h: 0.16, label: "alarm raised" },
+  { h: 0.24, label: "keys switched off (planned)" },
 ];
 
 export function RaceTimeline() {
@@ -41,7 +41,7 @@ export function RaceTimeline() {
         </div>
 
         <Card className="relative h-28">
-          <p className="label absolute top-3 left-5 text-[10px] text-text-tertiary">Without Shankh — LiteLLM 1.107.0, Oct 2026 (historical)</p>
+          <p className="label absolute top-3 left-5 text-[10px] text-text-tertiary">What actually happened — LiteLLM 1.107.0, October 2026</p>
           <div className="absolute right-5 bottom-8 left-5 h-px">
             <div className="track-draw absolute inset-0 bg-text-tertiary" />
             {REAL.map((p, i) => (
@@ -59,8 +59,8 @@ export function RaceTimeline() {
           </div>
         </Card>
 
-        <Card tone="inverted" className="relative mt-3 h-28">
-          <p className="label absolute top-3 left-5 text-[10px] text-accent">With Shankh — designed path, counterfactual (not yet measured)</p>
+        <Card tone="inverted" className="relative mt-5 h-28">
+          <p className="label absolute top-3 left-5 text-[10px] text-accent">With Shankh — how it is designed to go (not yet measured)</p>
           <div className="absolute right-5 bottom-8 left-5 h-px">
             <div className="track-draw absolute inset-y-0 left-0 bg-accent" style={{ width: pct(0.24) }} />
             {/* the gap: from the designed kill to the real attacker's use */}
@@ -75,7 +75,7 @@ export function RaceTimeline() {
                 <span className="block h-2.5 w-2.5 -translate-y-1/2 rounded-full bg-accent" />
                 {i === DESIGNED.length - 1 && (
                   <span className="absolute top-3 left-0 whitespace-nowrap font-mono text-[10px] text-background/80">
-                    rebuild → Arkiv report → kill, in minutes (target)
+                    caught → alarm → keys off, within minutes (planned)
                   </span>
                 )}
               </div>
@@ -86,19 +86,19 @@ export function RaceTimeline() {
 
       {/* Text equivalent: the visible layout on mobile, screen-reader-only on desktop. */}
       <ol className="flex flex-col gap-2 text-sm sm:sr-only">
-        <li className="label text-[10px] text-text-tertiary">Without Shankh — LiteLLM 1.107.0, Oct 2026 (historical)</li>
+        <li className="label text-[10px] text-text-tertiary">What actually happened — LiteLLM 1.107.0, October 2026</li>
         {REAL.map((p) => (
           <li key={p.label} className={`font-mono text-xs ${p.tone === "attack" ? "text-red-700 dark:text-red-400" : "text-text-secondary"}`}>
             {p.label}
           </li>
         ))}
-        <li className="label mt-2 text-[10px] text-accent">With Shankh — designed path, counterfactual (not yet measured)</li>
+        <li className="label mt-2 text-[10px] text-accent">With Shankh — how it is designed to go (not yet measured)</li>
         {DESIGNED.map((p) => (
           <li key={p.label} className="font-mono text-xs text-accent">
             {p.label}, minutes in
           </li>
         ))}
-        <li className="text-xs text-text-secondary">The gap between the designed kill and the observed stolen-key use: hours to spare.</li>
+        <li className="text-xs text-text-secondary">The gap between the keys going off and the attacker using one: hours to spare.</li>
       </ol>
 
       <p className="text-[11px] text-text-tertiary">

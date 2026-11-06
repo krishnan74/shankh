@@ -1,19 +1,18 @@
 "use client";
 
 /**
- * A fixed scrollspy rail (lg+ only) mirroring the 3-minute script's five beats. Highlights the
- * current beat in teal as it scrolls into view, each dot is a jump link, and j/k step to the
- * next/previous beat -- a presenter can drive the whole pitch without hunting for a scrollbar.
- * Hidden entirely below lg (the in-flow section kickers already carry the same timestamps there).
+ * A fixed rail (lg+ only) listing the page's four parts. The current part highlights in teal as
+ * you scroll, each one is a jump link, and j/k step to the next/previous part -- a presenter can
+ * drive the whole pitch without hunting for a scrollbar. Hidden below lg (the in-flow section
+ * labels carry the same numbering there).
  */
 import { useEffect, useRef, useState } from "react";
 
 const BEATS = [
-  { id: "beat-hook", time: "00:00" },
-  { id: "beat-proof", time: "00:25" },
-  { id: "beat-untouchable", time: "01:10" },
-  { id: "beat-why-now", time: "02:10" },
-  { id: "beat-close", time: "02:45" },
+  { id: "beat-incident", n: "01", label: "What happened" },
+  { id: "beat-solution", n: "02", label: "What Shankh does" },
+  { id: "beat-ens", n: "03", label: "Why it can't be silenced" },
+  { id: "beat-status", n: "04", label: "Where it stands" },
 ];
 
 export function PresenterRail() {
@@ -21,9 +20,8 @@ export function PresenterRail() {
   const activeIndexRef = useRef(0);
 
   useEffect(() => {
-    // Active beat = the last one whose header has scrolled above 35% of the viewport. Computed
-    // from positions on scroll (rAF-throttled) rather than per-header intersection events, so a
-    // fast jump past a whole section still lands on the right beat instead of a stale one.
+    // Active part = the last one whose header has scrolled above 35% of the viewport. Computed
+    // from positions on scroll (rAF-throttled), so a fast jump still lands on the right part.
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -60,27 +58,23 @@ export function PresenterRail() {
   }, []);
 
   return (
-    <nav className="presenter-rail flex-col gap-4" aria-label="Pitch beats">
+    <nav className="presenter-rail flex-col gap-4" aria-label="Page sections">
       {BEATS.map((beat) => {
         const active = beat.id === activeId;
         return (
-          <a
-            key={beat.id}
-            href={`#${beat.id}`}
-            aria-current={active ? "true" : undefined}
-            className="group flex items-center gap-2"
-          >
+          <a key={beat.id} href={`#${beat.id}`} aria-current={active ? "true" : undefined} className="group flex items-center gap-2">
             <span
-              className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 [transition-timing-function:var(--ease)] ${
+              className={`h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-300 [transition-timing-function:var(--ease)] ${
                 active ? "bg-accent" : "bg-text-tertiary"
               }`}
             />
             <span
-              className={`label text-[10px] transition-colors duration-300 [transition-timing-function:var(--ease)] ${
-                active ? "text-accent" : "text-text-tertiary group-hover:text-text-secondary"
+              className={`text-[11px] transition-colors duration-300 [transition-timing-function:var(--ease)] ${
+                active ? "text-accent" : "text-text-secondary group-hover:text-foreground"
               }`}
             >
-              {beat.time}
+              <span className="label mr-1.5 text-[10px]">{beat.n}</span>
+              <span className={active ? "inline" : "sr-only group-hover:not-sr-only"}>{beat.label}</span>
             </span>
           </a>
         );

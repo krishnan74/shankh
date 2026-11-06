@@ -23,7 +23,7 @@ export function ReportFeed({ reports, limit = 4 }: { reports: Report[] | null; l
   const rest = reports.length - shown.length;
   return (
     <div className="flex flex-col">
-      <p className="label mb-2 text-[10px] text-accent">✓ read live, Arkiv testnet</p>
+      <p className="label mb-2 text-[10px] text-accent">Alarms on Arkiv · live</p>
       <ul className="flex flex-col border-l border-accent/40">
         {shown.map((r) => (
           <li key={r.key} className="relative flex flex-col gap-1 border-b border-border py-2.5 pl-4 last:border-b-0">

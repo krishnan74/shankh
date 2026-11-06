@@ -16,7 +16,8 @@ function ConchMark() {
 
 export function TopBar({ blockNumber }: { blockNumber: bigint | null }) {
   return (
-    <div className="sticky top-0 z-30 -mx-6 mb-2 flex items-center justify-between border-b border-border bg-background/85 px-6 py-3 backdrop-blur-sm sm:-mx-10 sm:px-10">
+    <div className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4 sm:px-10">
       <div className="flex items-center gap-2">
         <span className="text-accent">
           <ConchMark />
@@ -42,6 +43,7 @@ export function TopBar({ blockNumber }: { blockNumber: bigint | null }) {
           GitHub
         </a>
         <ThemeToggle />
+      </div>
       </div>
     </div>
   );
