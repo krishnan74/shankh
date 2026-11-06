@@ -22,7 +22,7 @@
 | End-to-end: verify → Arkiv report | **wired and proven** — `shankh verify` writes its result to a real `shankh.report` entity automatically (Python shells out to the TS writer via `arkiv/src/write-report-cli.ts`, `--no-report` to skip) | entity `0xc669ad67...`, tx `0x39b329ad...` — see docs/evidence.md |
 | AWS kill (quarantine policy, self-deactivation, CloudTrail audit) | planned | n/a |
 | `KillSwitch` contract | **deployed to Sepolia** | `0x378fDf7BbdCB33D3504e96083a7DC7Fb882a0A2C`, deploy tx `0x9349e7b0e5d2e1880e6163fa1737914f25fdf125ecdb011dafff31babdb7aef2`, `maintainer()` confirmed on-chain to match the operator wallet |
-| ENS tree on Sepolia | planned | n/a |
+| ENS tree on Sepolia | **rehearsed end to end on an Anvil fork, passed — not yet on real Sepolia** | `shankh.eth` → `pypi.shankh.eth` (emancipated, corrected bitmap) → `shankh-demo.pypi.shankh.eth` (split resolver grants, `KillSwitch` syncs `shankh.revoked`), all verified live on the fork — see `scripts/ens/register-tree-fork-rehearsal.sh` and docs/feedback/ens.md item 2 |
 | Arkiv entities (`shankh.report`, `shankh.request`) and OSV mirror | **`shankh.report` writer proven live on the testnet**; `shankh.request` is schema-only, no writer yet; OSV mirror still a stub | real entity `0x8110825...`, tx `0x63442b3e...` — see docs/evidence.md; `arkiv/src/schema.ts`, `arkiv/src/client.ts`, `arkiv/src/report.ts` |
 | Status page (live demo link for ENS) | **deployed, reading real live data** | https://status-page-plum-nine.vercel.app reads `KillSwitch.maintainer()` on Sepolia and queries real `shankh.report` entities from Arkiv, server-side, on every request (`export const instant = false` + `connection()` to defeat Next 16's static prerendering — otherwise it would freeze whatever it saw at build time, which is exactly the "hard-coded values" failure the ENS track rules out) |
 | Claude Code hook | planned | n/a |
@@ -83,7 +83,7 @@ Each is a throwaway proof whose only job is to burn down an "to verify at event"
 
 ## Unknowns (named as spikes, answered by the spikes above or a dedicated script)
 
-- Does ENSv2's `PermissionedResolver` actually scope roles per text-record key, or only per node? (plan-2.md flags this — confirm against `ensdomains/contracts-v2` source before deploying the real tree, per its own warning.)
+- ~~Does ENSv2's `PermissionedResolver` actually scope roles per text-record key, or only per node?~~ — **answered, 2026-11-06: yes.** `grantSetterRoles(setterCalldata, account)` scopes a role to one key's resource (`keccak256(key)`); confirmed on an Anvil fork — after revoking the deployer's root `SET_TEXT`, a key-scoped grant for `shankh.source` still worked while an unscoped write to `shankh.revoked` correctly reverted. `KillSwitch` is the only holder of the `shankh.revoked`-scoped grant. See `scripts/ens/register-tree-fork-rehearsal.sh`.
 - October advisory (GHSA/OSV) timestamp for 1.107.0 — needed for the timeline-replay measurement; not yet found.
 - CloudTrail `LookupEvents` latency in practice — affects whether "signal → key inactive" demo timing claims are honest.
 - Arkiv maximum expiry — affects whether 90 days for `shankh.report` is achievable or needs adjusting.
