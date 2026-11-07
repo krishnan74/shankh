@@ -118,12 +118,13 @@ status-page/    Next.js app, deployed to Vercel. Live ENS/Arkiv status for the d
 arkiv/          TS package: @arkiv-network/sdk client, shankh.report/request writers, osv.mal importer (supporting feature).
                 Also holds the required /arkiv/*.md judging-criteria files (schema, friction, reach, why-arkiv, how-you-use-arkiv).
 scripts/        One-command deploy.sh / demo.sh / evidence.sh. Dry run by default, --write to act.
+video-assets/   demo-video cards (opening-card.png, end-card.png, from card.html) and the newspaper still; *.mp4 renders are gitignored.
 docs/           plan.md (living plan, read first), design.md, decisions.md, build-log.md, ai-usage.md, evidence.md, feedback/.
 plan-2.md, project-overview.md   Original unedited inputs — provenance only, see docs/plan.md for current state.
 ```
 
 ## Status
 
-**Deadline: Saturday 2026-11-07, 09:00 IST.** Features are frozen except demo-path fixes; what's left is recording the video (`docs/demo-video-script.md`) and a final pre-submission check. The submission form copy is in `docs/submission-form.md`.
+**Deadline: Saturday 2026-11-07, 09:00 IST.** Features are frozen except demo-path fixes; what's left is finishing the video (`docs/demo-video-script.md`, assets in `video-assets/`, recordings never committed — `*.mp4` is gitignored), adding its link to the README and form, and a final pre-submission check. The submission form copy is in `docs/submission-form.md`.
 
 Live and proven end to end: the `shankhd` watcher catches a poisoned install within seconds with nobody typing a command; `shankh verify` rebuilds a package from its public source; `shankh scan` sweeps every package's ENS bad-builds list under the emancipated `pypi.shankh.eth`, and with `--trust` acts on trusted reporters' Arkiv alarms (reporters named under the emancipated `reporters.shankh.eth`), re-checking each locally; alarms are read-only and extendable by anyone; the landing page and `/registry` read all of it live. The AWS key shut-off is live too (2026-11-07): `shankh.kill.respond()` quarantines then deactivates keys listed in `SHANKH_PROTECTED_KEYS`, via the `SHANKH_AWS_PROFILE` profile (`shankh-sandbox`; the demo's stolen key is profile `shankh-victim`); `scripts/demo-watch.sh restore` / `shankh restore-key` switches it back on. Not built: key auto-discovery, CloudTrail audit, file cleanup, the OSV advisory signal, Docker, `shankh.request`. See `docs/plan.md`'s Status table for the authoritative list, and `docs/pitch-study-guide.md` before pitching.

@@ -7,3 +7,10 @@ arkiv/dist/
 .demo/
 .demo-arkiv/
 .demo-watch/
+
+# Video: recordings and renders are far too big for git (the cut is ~450 MB); the assets that
+# make them (cards, stills, card.html) are committed in video-assets/.
+*.mp4
+*.mov
+# The original logo artwork (5 MB); the exports in status-page/ and video-assets/ are committed.
+/logo.png

@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,800&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=block" rel="stylesheet">
+<style>
+  html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#faf9f7;color:#16161a}
+  .card{position:relative;width:1920px;height:1080px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .grain{position:absolute;inset:0;opacity:.035;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+  .ripple{position:absolute;border-radius:50%;border:1.5px solid #0a7a6e;left:50%;top:50%;transform:translate(-50%,-50%)}
+  .logo{width:230px;height:230px;position:relative}
+  .name{font-family:Fraunces,serif;font-style:italic;font-weight:800;font-size:150px;letter-spacing:-.02em;line-height:1;margin-top:26px}
+  .tag{font-family:Fraunces,serif;font-weight:700;font-size:56px;letter-spacing:-.01em;margin-top:34px;text-align:center}
+  .tag em{font-style:italic;color:#0a7a6e}
+  .eyebrow{font-family:"Geist Mono",monospace;font-size:24px;letter-spacing:.3em;text-transform:uppercase;color:#0a7a6e;position:absolute;top:96px}
+  .foot{position:absolute;bottom:90px;font-family:"Geist Mono",monospace;font-size:24px;letter-spacing:.2em;text-transform:uppercase;color:rgba(22,22,26,.55)}
+  .links{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:40px}
+  .url{font-family:"Geist Mono",monospace;font-size:44px;color:#0a7a6e}
+  .gh{font-family:"Geist Mono",monospace;font-size:32px;color:rgba(22,22,26,.75)}
+  .live{font-family:Geist,sans-serif;font-size:30px;color:rgba(22,22,26,.7);margin-top:26px}
+  .partners{display:flex;gap:18px;margin-top:44px}
+  .pill{font-family:"Geist Mono",monospace;font-size:24px;letter-spacing:.14em;text-transform:uppercase;border:1.5px solid rgba(10,122,110,.5);color:#0a7a6e;border-radius:999px;padding:12px 26px}
+  .hidden{display:none}
+</style></head>
+<body>
+<div class="card" id="open">
+  <div class="grain"></div>
+  <div class="ripple" style="width:520px;height:520px;opacity:.16;top:37%"></div>
+  <div class="ripple" style="width:760px;height:760px;opacity:.10;top:37%"></div>
+  <div class="ripple" style="width:1000px;height:1000px;opacity:.06;top:37%"></div>
+  <div class="eyebrow">ETHGlobal Mumbai 2026</div>
+  <img class="logo" src="logo-mark-640.png" alt="">
+  <div class="name">Shankh</div>
+  <div class="tag">Stolen keys that <em>switch themselves off.</em></div>
+</div>
+<div class="card hidden" id="end">
+  <div class="grain"></div>
+  <div class="ripple" style="width:520px;height:520px;opacity:.12;top:34%"></div>
+  <div class="ripple" style="width:760px;height:760px;opacity:.07;top:34%"></div>
+  <img class="logo" style="width:170px;height:170px" src="logo-mark-640.png" alt="">
+  <div class="name" style="font-size:110px;margin-top:18px">Shankh</div>
+  <div class="links">
+    <div class="url">shankh-eth.vercel.app</div>
+    <div class="gh">github.com/krishnan74/shankh</div>
+  </div>
+  <div class="live">Live on Sepolia and the Arkiv testnet · open source (MIT)</div>
+  <div class="partners"><span class="pill">ENS</span><span class="pill">Arkiv</span><span class="pill">Ethereum Foundation · CROPS</span></div>
+  <div class="foot">One catches it. Everyone is saved.</div>
+</div>
+<script>if(location.hash==="#end"){document.getElementById("open").classList.add("hidden");document.getElementById("end").classList.remove("hidden")}</script>
+</body></html>
